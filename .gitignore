@@ -1,0 +1,72 @@
+# Build outputs
+**/bin/
+**/obj/
+**/[Bb]uild/
+**/[Dd]ebug/
+**/[Rr]elease/
+
+# Test results / coverage
+**/TestResults/
+**/*.trx
+**/*.coverage
+**/*.coveragexml
+**/coverage.*/
+
+# NuGet
+**/packages/
+**/*.nupkg
+**/*.snupkg
+**/project.assets.json
+**/project.nuget.cache
+
+# Publish / artifacts
+**/publish/
+**/artifacts/
+
+# ASP.NET / local settings (keep appsettings*.json tracked)
+**/appsettings.*.local.json
+**/secrets.json
+
+# EF Core
+**/Migrations/**/bin/
+**/Migrations/**/obj/
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.VC.db
+*.VC.VC.opendb
+
+# VS Code
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# Rider / JetBrains
+.idea/
+*.sln.iml
+
+# ReSharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# Dotnet tools
+.dotnet/
+
+# Logs
+**/*.log
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Cursor local data (optional but usually desired)
+.cursor/
+

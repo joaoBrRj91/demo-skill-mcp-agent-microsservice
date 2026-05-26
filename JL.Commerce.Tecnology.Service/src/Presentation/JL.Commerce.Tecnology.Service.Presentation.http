@@ -1,0 +1,6 @@
+@JL.Commerce.Tecnology.Service.Presentation_HostAddress = http://localhost:5299
+
+GET {{JL.Commerce.Tecnology.Service.Presentation_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

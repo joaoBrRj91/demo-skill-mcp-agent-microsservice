@@ -1,0 +1,51 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Presentation API (Debug)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-presentation",
+      "program": "${workspaceFolder}/JL.Commerce.Tecnology.Service/src/Presentation/bin/Debug/net10.0/JL.Commerce.Tecnology.Service.Presentation.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/JL.Commerce.Tecnology.Service/src/Presentation",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "https://localhost:7266;http://localhost:5299"
+      },
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
+        "uriFormat": "%s/docs"
+      }
+    },
+    {
+      "name": "Presentation API (HTTP only)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-presentation",
+      "program": "${workspaceFolder}/JL.Commerce.Tecnology.Service/src/Presentation/bin/Debug/net10.0/JL.Commerce.Tecnology.Service.Presentation.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/JL.Commerce.Tecnology.Service/src/Presentation",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5299"
+      },
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
+        "uriFormat": "%s/docs"
+      }
+    },
+    {
+      "name": ".NET Core Attach",
+      "type": "coreclr",
+      "request": "attach",
+      "processId": "${command:pickProcess}"
+    }
+  ]
+}
