@@ -15,11 +15,36 @@
       "Read(//c/Users/joaon/Projetos/IA/Study Projects/demo-skill-mcp-server-net-core/JL.Commerce.Tecnology.Service/**)",
       "Bash(timeout 12 dotnet run --project \"src/Presentation/JL.Commerce.Tecnology.Service.Presentation.csproj\" --configuration Release)",
       "Bash(grep -E \"\\\\.sln$|\\\\.slnx$\")",
-      "mcp__playwright__browser_snapshot"
+      "mcp__playwright__browser_snapshot",
+      "Bash(find 'C:\\\\Users\\\\joaon\\\\Projetos\\\\IA\\\\Study Projects\\\\demo-skill-mcp-server-net-core/JL.Commerce.Tecnology.Service' -name *.cs)"
     ]
   },
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "context7"
-  ]
+  ],
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "input=$(cat); echo \"$input\" | grep -q 'appsettings\\.json' && echo 'BLOCKED: appsettings.json is protected. Edit it manually if intentional.' && exit 2 || exit 0"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "input=$(cat); echo \"$input\" | grep -qE '\\.cs\"' && cd \"/c/Users/joaon/Projetos/IA/Study Projects/demo-skill-mcp-server-net-core/JL.Commerce.Tecnology.Service\" && dotnet build --no-restore -v q 2>&1 | tail -15 || exit 0"
+          }
+        ]
+      }
+    ]
+  }
 }
