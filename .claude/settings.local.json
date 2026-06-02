@@ -16,7 +16,11 @@
       "Bash(timeout 12 dotnet run --project \"src/Presentation/JL.Commerce.Tecnology.Service.Presentation.csproj\" --configuration Release)",
       "Bash(grep -E \"\\\\.sln$|\\\\.slnx$\")",
       "mcp__playwright__browser_snapshot",
-      "Bash(find 'C:\\\\Users\\\\joaon\\\\Projetos\\\\IA\\\\Study Projects\\\\demo-skill-mcp-server-net-core/JL.Commerce.Tecnology.Service' -name *.cs)"
+      "Bash(find 'C:\\\\Users\\\\joaon\\\\Projetos\\\\IA\\\\Study Projects\\\\demo-skill-mcp-server-net-core/JL.Commerce.Tecnology.Service' -name *.cs)",
+      "Bash(find 'C:\\\\Users\\\\joaon\\\\Projetos\\\\IA\\\\Study Projects\\\\demo-skill-mcp-server-net-core/JL.Commerce.Tecnology.Service' -name *.csproj)",
+      "Bash(find 'C:\\\\Users\\\\joaon\\\\Projetos\\\\IA\\\\Study Projects\\\\demo-skill-mcp-server-net-core/JL.Commerce.Tecnology.Service/tests' -name *.cs)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__query-docs"
     ]
   },
   "enableAllProjectMcpServers": true,
