@@ -1,5 +1,14 @@
 {
   "mcpServers": {
+    "ddd-scaffold": {
+      "type": "stdio",
+      "command": "dotnet",
+      "args": [
+        "run",
+        "--project",
+        "C:\\Users\\joaon\\Projetos\\IA\\Study Projects\\demo-skill-mcp-server-net-core\\JL.DddScaffold.Mcp\\src\\JL.DddScaffold.Mcp\\JL.DddScaffold.Mcp.csproj"
+      ]
+    },
     "context7": {
       "type": "http",
       "url": "https://mcp.context7.com/mcp"

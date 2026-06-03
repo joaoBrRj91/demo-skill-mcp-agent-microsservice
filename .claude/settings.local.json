@@ -20,12 +20,14 @@
       "Bash(find 'C:\\\\Users\\\\joaon\\\\Projetos\\\\IA\\\\Study Projects\\\\demo-skill-mcp-server-net-core/JL.Commerce.Tecnology.Service' -name *.csproj)",
       "Bash(find 'C:\\\\Users\\\\joaon\\\\Projetos\\\\IA\\\\Study Projects\\\\demo-skill-mcp-server-net-core/JL.Commerce.Tecnology.Service/tests' -name *.cs)",
       "mcp__context7__resolve-library-id",
-      "mcp__context7__query-docs"
+      "mcp__context7__query-docs",
+      "Read(//c/Users/joaon/.claude/**)"
     ]
   },
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
-    "context7"
+    "context7",
+    "ddd-scaffold"
   ],
   "hooks": {
     "PreToolUse": [
