@@ -21,7 +21,8 @@
       "Bash(find 'C:\\\\Users\\\\joaon\\\\Projetos\\\\IA\\\\Study Projects\\\\demo-skill-mcp-server-net-core/JL.Commerce.Tecnology.Service/tests' -name *.cs)",
       "mcp__context7__resolve-library-id",
       "mcp__context7__query-docs",
-      "Read(//c/Users/joaon/.claude/**)"
+      "Read(//c/Users/joaon/.claude/**)",
+      "Bash(git:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

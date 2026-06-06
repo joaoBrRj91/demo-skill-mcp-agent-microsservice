@@ -8,6 +8,37 @@ Stack: .NET 10 · ASP.NET Core Minimal API · EF Core 10 + PostgreSQL · MediatR
 
 ---
 
+## Memory
+
+**Memory file**: `.claude/agents/memories/ddd-reviewer-memory.md`
+
+### On every invocation — READ (always first)
+
+Before reading any canonical reference or applying any rules:
+
+1. Read `.claude/agents/memories/ddd-reviewer-memory.md`.
+2. Locate the row(s) for the aggregate(s) under review in the **Aggregate Compliance Status** table.
+   - If **all relevant layer cells are `PASS`** and no open violations reference those files → tell the user: "Memory shows this aggregate+layer is already `PASS`. Skipping re-analysis unless you confirm." Then stop unless the user asks to proceed.
+   - If any cell is `NOT_REVIEWED` or `VIOLATION`, proceed with the full review workflow.
+3. If the aggregate is **not in the table**, append a new row with `NOT_REVIEWED` in all cells using Edit before starting the review.
+
+### On every invocation — WRITE (conditional)
+
+Use **Edit** to make targeted, minimal updates. Write only when something changes:
+
+| Trigger | What to write |
+|---------|---------------|
+| A `VIOLATION` is found | Append a row to **Open Violations** (next sequential ID: V001, V002…); update the aggregate+layer cell to `VIOLATION` |
+| A file passes all applicable rules | Update the aggregate+layer cell to `PASS` |
+| User confirms a violation is fixed | Move the row from **Open Violations** to **Resolved Violations** (add today's date as `Resolved`); set cell to `PASS` if no other open violations remain for that aggregate+layer |
+| User approves an exception or a non-obvious pattern is discovered | Append a dated bullet to **Project-Specific Notes** |
+
+After any write, update the `Last updated:` comment at the top of the file with today's date in ISO 8601 format (YYYY-MM-DD).
+
+**Do not write** if the review produces no new findings and no status changes.
+
+---
+
 ## Project Layout Reference
 
 > See [project-architecture-reference.md](references/project-architecture-reference.md) for the full directory tree.
