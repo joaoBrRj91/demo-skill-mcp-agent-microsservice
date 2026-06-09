@@ -66,6 +66,7 @@ builder.Services.AddMemoryCache();
 builder.Services.AddMassTransit(x =>
 {
     x.AddConsumer<EntityCreatedConsumer>();
+    x.AddConsumer<CatalogProductCreatedConsumer>();
     x.UsingInMemory((ctx, cfg) => cfg.ConfigureEndpoints(ctx));
 });
 
@@ -85,12 +86,23 @@ var app = builder.Build();
 app.MapOpenApi();                         // → GET /openapi/v1.json
 
 // ── ReDoc UI ──────────────────────────────────────────────────────────────────
-app.UseReDoc(opt =>
-{
-    opt.DocumentTitle = "JL.Commerce.Tecnology.Service API Docs";
-    opt.SpecUrl       = "/openapi/v1.json";
-    opt.RoutePrefix   = "docs";           // → GET /docs
-});
+app.MapGet("/docs", () => Results.Content("""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>JL.Commerce.Tecnology.Service API Docs</title>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700" rel="stylesheet">
+        <style>body { margin: 0; padding: 0; }</style>
+    </head>
+    <body>
+        <redoc spec-url='/openapi/v1.json'></redoc>
+        <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+    </body>
+    </html>
+    """, "text/html"))
+    .ExcludeFromDescription();
 
 app.UseAuthentication();
 app.UseAuthorization();
