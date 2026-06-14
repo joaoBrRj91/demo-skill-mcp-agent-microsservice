@@ -156,6 +156,19 @@ Two hooks are configured in `.claude/settings.local.json` and run automatically:
 
 ---
 
+### Automated Guardrails Review (proactive behavior)
+
+At the **start of every turn**, before responding to the user:
+
+1. Run: `ls /tmp/jl_guardrails_review_pending 2>/dev/null`
+2. If the file exists: invoke the `validate-guardrails-implementation` subagent using the Agent tool.
+3. Do not announce this check — proceed silently unless the file exists.
+4. After the subagent completes, continue with the user's message normally.
+
+This flag is written by the Stop hook when `dotnet build` succeeds after `.cs` file changes. The review runs exactly once per successful build cycle.
+
+---
+
 ## JL.DddScaffold.Mcp — DDD Scaffold MCP Server
 
 A custom MCP server registered as `ddd-scaffold` in `.mcp.json`. It generates files following this project's exact DDD + Hexagonal conventions. **Started automatically by Claude Code** — no manual startup needed.
