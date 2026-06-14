@@ -52,7 +52,17 @@
         "hooks": [
           {
             "type": "command",
-            "command": "input=$(cat); echo \"$input\" | grep -qE '\\.cs\"' && cd \"/c/Users/joaon/Projetos/IA/Study Projects/demo-skill-mcp-server-net-core/JL.Commerce.Tecnology.Service\" && dotnet build --no-restore -v q 2>&1 | tail -15 || exit 0"
+            "command": "input=$(cat); echo \"$input\" | grep -qE '\\.cs\"' && touch /tmp/jl_cs_modified || exit 0"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -f /tmp/jl_cs_modified ] && rm /tmp/jl_cs_modified && cd \"/c/Users/joaon/Projetos/IA/Study Projects/demo-skill-mcp-server-net-core/JL.Commerce.Tecnology.Service\" && dotnet build --no-restore -v q 2>&1 | tail -15 || exit 0"
           }
         ]
       }
