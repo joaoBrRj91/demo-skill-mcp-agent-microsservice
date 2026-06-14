@@ -1,7 +1,7 @@
 # ddd-reviewer Memory
 
 > Managed by the ddd-reviewer subagent. Do not edit manually unless correcting an error.
-> Last updated: 2026-06-09
+> Last updated: 2026-06-14
 
 ---
 
@@ -10,7 +10,7 @@
 | Aggregate       | Domain    | Application | Infrastructure.Data | Infrastructure.Integration | Presentation |
 |-----------------|-----------|-------------|---------------------|----------------------------|--------------|
 | CatalogProduct  | VIOLATION | PASS        | PASS                | PASS                       | VIOLATION    |
-| Entity          | VIOLATION | PASS        | PASS                | PASS                       | VIOLATION    |
+| Entity          | PASS      | PASS        | PASS                | PASS                       | VIOLATION    |
 
 > Status values: `PASS` | `VIOLATION` | `NOT_REVIEWED`
 > Set to `PASS` only after reviewing ALL files in that aggregate+layer combination.

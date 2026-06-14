@@ -10,7 +10,7 @@
 | Field | Value |
 |-------|-------|
 | Date | 2026-06-14 |
-| Git SHA | a54d1ca0ab545aa6b1e74e9a0c68467feb6551da |
+| Git SHA | fcea111e11dd748dcb705aa9b67cb9ec314a212c |
 | Scanner used | Static fallback (Semgrep 1.166.0 installed; cloud rules returned 0 results without login) |
 | Total findings | 9 |
 | Critical | 3 |

@@ -31,9 +31,11 @@ Run: `mkdir -p ".claude/agents/reports"`
 
 ## Step 2 — Invoke sub-agents in parallel
 
-Call both agents **simultaneously** in a single Agent tool response (two tool calls in one message):
+> ⚠️ **MANDATORY PARALLELISM REQUIREMENT**: You MUST issue **both** Agent tool calls in the **same single response message**. This is not optional. Do NOT make one call, wait for its result, then make the second call. Both `Agent` tool calls must appear together in the same response block — this is the only way Claude Code executes them concurrently. If you call them sequentially, the orchestration fails.
 
-**Agent A — ddd-reviewer:**
+In your next response, emit exactly two Agent tool calls (no text between them, no other content before them) targeting `ddd-reviewer` and `security-reviewer`:
+
+**Agent A — ddd-reviewer** (first tool call):
 
 ```
 Review the following changed files for DDD compliance.
@@ -45,7 +47,7 @@ Changed files (relative to repo root):
 Git SHA: <GIT_SHA>
 ```
 
-**Agent B — security-reviewer:**
+**Agent B — security-reviewer** (second tool call, in the SAME response as Agent A):
 
 ```
 Scan the service for security issues.
@@ -57,7 +59,7 @@ The following .cs files were modified since the last review:
 Git SHA: <GIT_SHA>
 ```
 
-Label their outputs `DDD_RESULT` and `SEC_RESULT`.
+Wait for BOTH to complete before continuing to Step 3. Label their outputs `DDD_RESULT` and `SEC_RESULT`.
 
 ---
 
