@@ -1,7 +1,7 @@
 # security-reviewer Memory
 
 > Managed by the security-reviewer subagent. Do not edit manually unless correcting an error.
-> Last updated: <!-- ISO 8601 date -->
+> Last updated: 2026-06-14
 
 ---
 
@@ -9,14 +9,14 @@
 
 | Field | Value |
 |-------|-------|
-| Date | NOT_SCANNED |
-| Git SHA | NOT_SCANNED |
-| Scanner used | — |
-| Total findings | — |
-| Critical | — |
-| High | — |
-| Medium | — |
-| Low | — |
+| Date | 2026-06-14 |
+| Git SHA | a54d1ca0ab545aa6b1e74e9a0c68467feb6551da |
+| Scanner used | Static fallback (Semgrep 1.166.0 installed; cloud rules returned 0 results without login) |
+| Total findings | 9 |
+| Critical | 3 |
+| High | 1 |
+| Medium | 5 |
+| Low | 0 |
 
 ---
 
@@ -24,7 +24,15 @@
 
 | ID | Severity | File | Line | Title | Status |
 |----|----------|------|------|-------|--------|
-| — | — | — | — | — | OPEN |
+| S001 | Critical | src/Presentation/appsettings[dot]json | 10 | Hardcoded database password in connection string | OPEN |
+| S002 | Critical | src/Presentation/appsettings[dot]json | 13 | Placeholder JWT Authority value | OPEN |
+| S003 | Critical | src/Presentation/Endpoints/CatalogProductEndpoints.cs | 23-51 | All CatalogProduct mutation endpoints lack RequireAuthorization | OPEN |
+| S004 | Critical | src/Presentation/Endpoints/EntityEndpoints.cs | 19-23 | Entity POST mutation endpoint lacks RequireAuthorization | OPEN |
+| S005 | High | src/Presentation/Endpoints/CatalogProductEndpoints.cs | 101-119 | Exception message leaked in HTTP 404 response body | OPEN |
+| S006 | Medium | src/Presentation/Program.cs | — | Missing rate limiter (AddRateLimiter / UseRateLimiter) | OPEN |
+| S007 | Medium | src/Presentation/appsettings[dot]json | 8 | AllowedHosts wildcard permits any Host header | OPEN |
+| S008 | Medium | src/Presentation/Program.cs | — | Missing UseExceptionHandler middleware | OPEN |
+| S009 | Medium | src/Presentation/Program.cs | 70 | MassTransit using InMemory transport (not production-safe) | OPEN |
 
 > Status values: `OPEN` | `RESOLVED` | `ACCEPTED_RISK` | `FALSE_POSITIVE`
 
@@ -39,4 +47,4 @@
 
 ## Project-Specific Notes
 
-<!-- Record accepted risks, approved exceptions, and architectural security decisions here. -->
+- 2026-06-14: Initial scan completed at commit a54d1ca. MassTransit is pinned to 8.5.5 (9+ requires paid license). InMemory transport is intentional for local dev but must be replaced with RabbitMQ (UsingRabbitMq) for any production deployment.

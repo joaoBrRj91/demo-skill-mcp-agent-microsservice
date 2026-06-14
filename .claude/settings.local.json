@@ -22,7 +22,11 @@
       "mcp__context7__resolve-library-id",
       "mcp__context7__query-docs",
       "Read(//c/Users/joaon/.claude/**)",
-      "Bash(git:*)"
+      "Bash(git:*)",
+      "Bash(semgrep --version)",
+      "Bash(echo \"EXIT:$?\")",
+      "mcp__plugin_semgrep_semgrep__semgrep_scan",
+      "Bash(semgrep scan:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
