@@ -56,6 +56,19 @@ Source root: `JL.Commerce.Tecnology.Service/src/`
 
 ---
 
+## Phase 0.5 — Scope determination
+
+Parse `SECURITY_SCOPE` from the invocation context (set by the orchestrator in the prompt):
+
+| Value | Action |
+|-------|--------|
+| `DOMAIN_ONLY` | Skip Phases 1–4 entirely. The Domain layer has zero external NuGet deps (rule D1) and no HTTP, DB, or auth code — it cannot introduce security vulnerabilities. Read Open Findings and Cached Fix Suggestions from memory. Use them as-is for Phase 5. Do **not** update the Git SHA in memory (no security-relevant code changed). |
+| `TARGETED` | Run Phases 1–3 but scope the Semgrep scan to the specific changed file paths provided in `CHANGED_SECURITY_FILES` instead of scanning all of `JL.Commerce.Tecnology.Service/src/`. |
+| `FULL` | Default behavior. Run Phases 1–4 as written. |
+| *(absent)* | Treat as `FULL`. |
+
+---
+
 ## Phase 1 — Probe for Semgrep
 
 Run: `semgrep --version`
@@ -85,14 +98,22 @@ Proceeding with static fallback analysis now.
 Run two commands. Parse stdout JSON directly — do not write temp files.
 
 **Command A — C# source files:**
-```
-semgrep scan --config p/csharp --config p/owasp-top-ten --config p/secrets --json --severity WARNING --severity ERROR --exclude "*/bin/*" --exclude "*/obj/*" "JL.Commerce.Tecnology.Service/src/"
-```
+
+- If `SECURITY_SCOPE=FULL`: scan the entire source tree.
+  ```
+  semgrep scan --config p/csharp --config p/owasp-top-ten --config p/secrets --json --severity WARNING --severity ERROR --exclude "*/bin/*" --exclude "*/obj/*" "JL.Commerce.Tecnology.Service/src/"
+  ```
+- If `SECURITY_SCOPE=TARGETED`: scan only the changed security-relevant files (paths from `CHANGED_SECURITY_FILES`).
+  ```
+  semgrep scan --config p/csharp --config p/owasp-top-ten --config p/secrets --json --severity WARNING --severity ERROR --exclude "*/bin/*" --exclude "*/obj/*" <file1> <file2> ...
+  ```
 
 **Command B — JSON config files (secrets only):**
-```
-semgrep scan --config p/secrets --json --severity WARNING --severity ERROR "JL.Commerce.Tecnology.Service/src/Presentation/"
-```
+
+- Always run against the Presentation config directory regardless of scope (appsettings.json rarely changes but must always be checked).
+  ```
+  semgrep scan --config p/secrets --json --severity WARNING --severity ERROR "JL.Commerce.Tecnology.Service/src/Presentation/"
+  ```
 
 For each item in the combined `.results[]` array, extract:
 - `check_id` → Title basis
@@ -156,9 +177,15 @@ Flag calls to: `ExecuteSqlRaw`, `FromSqlRaw`, `ExecuteSqlInterpolated` (these ac
 
 ---
 
-## Phase 4 — Fix enrichment via context7
+## Phase 4 — Fix enrichment via context7 (cache-aware)
 
-Before writing the Recommended Fix for each finding, call context7:
+For **each finding** in the combined results:
+
+1. Check whether the finding ID (e.g., `S001`) already has an entry in the `Cached Fix Suggestions` section of `.claude/agents/memories/security-reviewer-memory.md`.
+   - **If a cached fix exists** → copy its text as the `Recommended Fix`. **Skip context7 calls for this finding.**
+   - **If no cached fix exists** (new finding) → call context7 as below, write the result back to `Cached Fix Suggestions` in memory under a new key (next `F` number), and add the `Fix Ref` to the finding's row in the Open Findings table.
+
+### context7 lookup (new findings only)
 
 1. `mcp__context7__resolve-library-id({ libraryName: "<library>" })`
 2. `mcp__context7__query-docs({ libraryId: "<id>", topic: "<topic>" })`
@@ -166,13 +193,13 @@ Before writing the Recommended Fix for each finding, call context7:
 
 | Finding category | `libraryName` | `topic` |
 |-----------------|---------------|---------|
-| Rate limiting (F4/S006) | `Microsoft.AspNetCore` | `rate limiting AddRateLimiter UseRateLimiter fixed window` |
-| Authorization on endpoints (F3/S003, S004) | `Microsoft.AspNetCore` | `RequireAuthorization minimal api MapGroup` |
-| Exception handler middleware (F4/S008) | `Microsoft.AspNetCore` | `UseExceptionHandler problem details IExceptionHandler` |
-| JWT Bearer options (F2/S002) | `Microsoft.AspNetCore.Authentication.JwtBearer` | `JwtBearerOptions Authority Audience ValidateIssuer TokenValidationParameters` |
-| Connection string secrets (F1/S001) | `Microsoft.Extensions.Configuration` | `user secrets environment variables connection string override` |
-| AllowedHosts host filtering (F1/S007) | `Microsoft.AspNetCore` | `AllowedHosts UseHostFiltering middleware` |
-| MassTransit transport (F4/S009) | `MassTransit` | `RabbitMQ transport production UsingRabbitMq` |
+| Rate limiting | `Microsoft.AspNetCore` | `rate limiting AddRateLimiter UseRateLimiter fixed window` |
+| Authorization on endpoints | `Microsoft.AspNetCore` | `RequireAuthorization minimal api MapGroup` |
+| Exception handler middleware | `Microsoft.AspNetCore` | `UseExceptionHandler problem details IExceptionHandler` |
+| JWT Bearer options | `Microsoft.AspNetCore.Authentication.JwtBearer` | `JwtBearerOptions Authority Audience ValidateIssuer TokenValidationParameters` |
+| Connection string secrets | `Microsoft.Extensions.Configuration` | `user secrets environment variables connection string override` |
+| AllowedHosts host filtering | `Microsoft.AspNetCore` | `AllowedHosts UseHostFiltering middleware` |
+| MassTransit transport | `MassTransit` | `RabbitMQ transport production UsingRabbitMq` |
 
 ---
 

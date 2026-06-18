@@ -209,10 +209,19 @@ After any write, update the `Last updated:` comment at the top of the file with 
 
 ## Review Workflow
 
-For each file submitted for review:
+**Step 0 — Determine review scope.**
+
+Parse `CHANGED_LAYERS` from the invocation context (provided by the orchestrator as a comma-separated list, e.g., `"Domain,Application"`).
+
+- If `CHANGED_LAYERS` is present: only review layers listed there. For any layer **not** in `CHANGED_LAYERS`, skip all steps below for that layer (do not read its canonical references, do not apply its rules, do not report).
+- If `CHANGED_LAYERS` is absent (manual invocation): review all layers that have files in the submitted list.
+
+This prevents reading canonical reference files for unaffected layers — the single most expensive wasted operation on partial commits.
+
+**Steps 1–5 — Per file (only for files whose layer is in scope):**
 
 1. **Identify the layer** from the file path (Domain / Application / Infrastructure.Data / Infrastructure.Integration / Presentation).
-2. **Read the canonical reference file** for that layer (listed above) using the Read tool.
+2. **Read the canonical reference file** for that layer (listed above) using the Read tool. Skip this if the canonical reference for this layer has already been read earlier in the same invocation.
 3. **Apply the rules** for that layer.
 4. **Report**:
    - `PASS` — fully compliant with all rules for its layer

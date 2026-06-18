@@ -6,3 +6,7 @@ namespace JL.Commerce.Tecnology.Service.Application.Queries.GetAllCatalogProduct
 public sealed record GetAllCatalogProductsQuery : IRequest<IReadOnlyList<CatalogProductDto>>;
 
 
+
+
+
+

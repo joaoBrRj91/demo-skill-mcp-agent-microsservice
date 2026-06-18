@@ -17,7 +17,81 @@ Check if `/tmp/jl_guardrails_review_pending` exists.
 - **If it exists**: read it and parse `GIT_SHA`, `TIMESTAMP`, and `CHANGED_FILES` (one `.cs` path per line).
 - **If it does not exist**: derive context from the conversation — run `git rev-parse HEAD` for SHA, use current datetime, and use any `.cs` files mentioned by the user or changed since the last commit (`git diff --name-only HEAD~1 HEAD`).
 
-Proceed to Step 1 regardless.
+Proceed to Step 0.5 regardless.
+
+---
+
+## Step 0.5 — Classify changed files by layer
+
+For each path in `CHANGED_FILES`, classify it into one or more of the following buckets based on path segments:
+
+| Bucket | Condition |
+|--------|-----------|
+| `DOMAIN_FILES` | path contains `/Domain/` |
+| `APP_FILES` | path contains `/Application/` |
+| `INFRA_DATA_FILES` | path contains `/Infrastructure.Data/` |
+| `INFRA_INT_FILES` | path contains `/Infrastructure.Integration/` |
+| `PRESENTATION_FILES` | path contains `/Presentation/` |
+
+Derive `CHANGED_LAYERS` (comma-separated list of layer names with at least one changed file, e.g., `"Domain"` or `"Domain,Application"`).
+
+Derive `SECURITY_SCOPE`:
+
+| Condition | Value |
+|-----------|-------|
+| Only `DOMAIN_FILES` are non-empty (all other buckets empty) | `DOMAIN_ONLY` |
+| `PRESENTATION_FILES` or `INFRA_DATA_FILES` or `INFRA_INT_FILES` non-empty | `TARGETED` |
+| `APP_FILES` non-empty with no Presentation/Infra files | `TARGETED` |
+| Any unclassified file or unknown path | `FULL` |
+
+For `TARGETED` scope, collect `CHANGED_SECURITY_FILES`: the subset of changed paths that fall in `PRESENTATION_FILES` or `INFRA_DATA_FILES` (these are the only files Semgrep needs to target).
+
+---
+
+## Step 0.6 — Memory pre-check (skip sub-agents when possible)
+
+Read both memory files to determine which sub-agents can be bypassed.
+
+### DDD pre-check
+
+Read `.claude/agents/memories/ddd-reviewer-memory.md`.
+
+For each path in `CHANGED_FILES`:
+- Derive the aggregate name (second directory under `/Aggregates/`, or infer from Events/Exceptions path naming).
+- Derive the layer (from the bucket classification above).
+- Look up the `(aggregate, layer)` cell in the **Aggregate Compliance Status** table.
+
+Decision:
+- If **any** cell is `NOT_REVIEWED` → `DDD_SKIP=false` (agent must review unknown territory)
+- If **any** cell is `VIOLATION` → `DDD_SKIP=false` (commit may have fixed an open violation)
+- If **all** cells are `PASS` → `DDD_SKIP=true`
+
+If `DDD_SKIP=true`: build `DDD_RESULT` directly from memory without spawning the sub-agent:
+```
+DDD Compliance (from memory — no re-review needed):
+  All changed (aggregate, layer) cells are PASS.
+  Open violations on record (for other files, not changed by this commit):
+    [list V-IDs and descriptions from Open Violations table, or "none"]
+```
+
+### Security pre-check
+
+Run `git rev-parse HEAD` to get `CURRENT_SHA`.
+Read `.claude/agents/memories/security-reviewer-memory.md`, extract `Git SHA` from the Last Scan State table.
+
+Decision:
+- If `SECURITY_SCOPE=DOMAIN_ONLY` → `SEC_SKIP=true` (Domain layer has no security surface)
+- Else if stored SHA == `CURRENT_SHA` → `SEC_SKIP=true` (scan already ran at this exact commit)
+- Else → `SEC_SKIP=false`
+
+If `SEC_SKIP=true`: build `SEC_RESULT` directly from memory without spawning the sub-agent:
+```
+Security (from memory — re-scan not needed):
+  SCOPE: <reason for skip>
+  Using findings from last scan at <stored SHA>.
+  Open findings: [list from Open Findings table with Fix Refs]
+  Counts: Critical=N, High=N, Medium=N, Low=N
+```
 
 ---
 
@@ -27,13 +101,20 @@ Run: `mkdir -p ".claude/agents/reports"`
 
 ---
 
-## Step 2 — Invoke sub-agents in parallel
+## Step 2 — Invoke sub-agents (conditional, in parallel)
 
-> ⚠️ **MANDATORY PARALLELISM REQUIREMENT**: You MUST issue **both** Agent tool calls in the **same single response message**. This is not optional. Do NOT make one call, wait for its result, then make the second call. Both `Agent` tool calls must appear together in the same response block — this is the only way Claude Code executes them concurrently. If you call them sequentially, the orchestration fails.
+First evaluate the skip flags from Step 0.6:
 
-In your next response, emit exactly two Agent tool calls (no text between them, no other content before them) targeting `ddd-reviewer` and `security-reviewer`:
+| DDD_SKIP | SEC_SKIP | Action |
+|----------|----------|--------|
+| true | true | Skip this step entirely. Both results are already built from memory. Proceed to Step 3. |
+| true | false | Spawn **security-reviewer only**. |
+| false | true | Spawn **ddd-reviewer only**. |
+| false | false | Spawn **both in parallel** (see parallelism requirement below). |
 
-**Agent A — ddd-reviewer** (first tool call):
+> ⚠️ **MANDATORY PARALLELISM REQUIREMENT** (when spawning both): You MUST issue both Agent tool calls in the **same single response message**. Do NOT make one call, wait for its result, then make the second call. If you call them sequentially the orchestration fails.
+
+**Agent A — ddd-reviewer** (omit if `DDD_SKIP=true`):
 
 ```
 Review the following changed files for DDD compliance.
@@ -43,21 +124,25 @@ Changed files (relative to repo root):
 <CHANGED_FILES from trigger file>
 
 Git SHA: <GIT_SHA>
+CHANGED_LAYERS: <comma-separated layer names from Step 0.5>
 ```
 
-**Agent B — security-reviewer** (second tool call, in the SAME response as Agent A):
+**Agent B — security-reviewer** (omit if `SEC_SKIP=true`):
 
 ```
 Scan the service for security issues.
-Apply the full security-reviewer workflow (memory check, Semgrep or static fallback, context7 fix enrichment, memory update).
+Apply the full security-reviewer workflow (memory check, scope determination, Semgrep or static fallback, context7 fix enrichment for new findings only, memory update).
 
 The following .cs files were modified since the last review:
 <CHANGED_FILES from trigger file>
 
 Git SHA: <GIT_SHA>
+SECURITY_SCOPE: <DOMAIN_ONLY | TARGETED | FULL from Step 0.5>
+CHANGED_SECURITY_FILES:
+<one path per line — only for TARGETED scope; omit if FULL or DOMAIN_ONLY>
 ```
 
-Wait for BOTH to complete before continuing to Step 3. Label their outputs `DDD_RESULT` and `SEC_RESULT`.
+Wait for all spawned agents to complete before continuing to Step 3. Label their outputs `DDD_RESULT` and `SEC_RESULT`.
 
 ---
 
