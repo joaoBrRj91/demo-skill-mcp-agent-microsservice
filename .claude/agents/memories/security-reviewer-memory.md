@@ -10,7 +10,7 @@
 | Field | Value |
 |-------|-------|
 | Date | 2026-06-18 |
-| Git SHA | 93ab2fe128d908147431074c7de83e89b3b39fde |
+| Git SHA | 45238930e8c4ac323486d4473dec03ccca0b5659 |
 | Scanner used | Semgrep 1.166.0 (MCP plugin) + Static fallback cross-validation |
 | Total findings | 9 |
 | Critical | 4 |
@@ -127,3 +127,4 @@ Replace `x.UsingInMemory(...)` with `x.UsingRabbitMq(...)` for production deploy
 
 - 2026-06-14: Initial scan completed at commit a54d1ca. MassTransit is pinned to 8.5.5 (9+ requires paid license). InMemory transport is intentional for local dev but must be replaced with RabbitMQ (UsingRabbitMq) for any production deployment.
 - 2026-06-18: Re-scan at commit 93ab2fe (Entity.cs added UpdatedAt field). No new security findings introduced by the change. All 9 prior findings remain OPEN.
+- 2026-06-18: SHA bump to 45238930 (GetAllCatalogProductsQueryHandler.cs modified — Application layer only, no security-relevant changes). All 9 prior findings remain OPEN.

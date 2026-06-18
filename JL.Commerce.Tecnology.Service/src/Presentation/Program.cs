@@ -58,6 +58,7 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
 // ── Repository ────────────────────────────────────────────────────────────────
 builder.Services.AddScoped<IEntityRepository, EntityRepository>();
 builder.Services.AddScoped<ICatalogProductRepository, CatalogProductRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 // ── In-Memory Cache ───────────────────────────────────────────────────────────
 builder.Services.AddMemoryCache();
@@ -67,6 +68,7 @@ builder.Services.AddMassTransit(x =>
 {
     x.AddConsumer<EntityCreatedConsumer>();
     x.AddConsumer<CatalogProductCreatedConsumer>();
+    x.AddConsumer<UserCreatedConsumer>();
     x.UsingInMemory((ctx, cfg) => cfg.ConfigureEndpoints(ctx));
 });
 
@@ -110,5 +112,6 @@ app.UseAuthorization();
 // ── Route registration ────────────────────────────────────────────────────────
 app.MapEntityEndpoints();
 app.MapCatalogProductEndpoints();
+app.MapUserEndpoints();
 
 app.Run();
