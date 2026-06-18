@@ -10,6 +10,8 @@ public sealed class Entity : AggregateRoot<EntityId>
     public DateTime CreatedAt { get; private set; }
     public DateTime? UpdatedAt { get; private set; }
 
+    
+
     private Entity() { }  // EF Core constructor
 
     public static Entity Create(string name, string description)

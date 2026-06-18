@@ -4,14 +4,12 @@
       "Bash(dotnet new:*)",
       "Bash(dotnet sln:*)",
       "Bash(dotnet add:*)",
-      "Bash(BASE=\"/c/Users/joaon/Projetos/IA/Study Projects/demo-skill-mcp-server-net-core/JL.Commerce.Tecnology.Service\")",
       "Bash(mkdir -p \"$BASE/src/Domain/Abstractions\" \"$BASE/src/Domain/Aggregates/Entity\" \"$BASE/src/Domain/ValueObjects\" \"$BASE/src/Domain/Events\" \"$BASE/src/Domain/Exceptions\" \"$BASE/src/Domain/Enums\" \"$BASE/src/Application/Behaviors\" \"$BASE/src/Application/Commands/CreateEntity\" \"$BASE/src/Application/Queries/GetEntityById\" \"$BASE/src/Application/DTOs\" \"$BASE/src/Application/Mappings\" \"$BASE/src/Application/Ports\" \"$BASE/src/Infrastructure.Data/Context\" \"$BASE/src/Infrastructure.Data/Repositories\" \"$BASE/src/Infrastructure.Data/Configurations\" \"$BASE/src/Infrastructure.Data/Migrations\" \"$BASE/src/Infrastructure.Integration/Messaging/Consumers\" \"$BASE/src/Infrastructure.Integration/Messaging/Publishers\" \"$BASE/src/Infrastructure.Integration/Cache\" \"$BASE/src/Presentation/Endpoints\" \"$BASE/src/Presentation/Filters\" \"$BASE/src/Presentation/Middleware\" \"$BASE/src/Presentation/Configuration\" \"$BASE/tests/UnitTests\" \"$BASE/tests/IntegrationTests\")",
       "Read(//c/Users/joaon/Projetos/IA/Study Projects/demo-skill-mcp-server-net-core/JL.Commerce.Tecnology.Service/src/Infrastructure.Integration/**)",
       "Bash(dotnet restore:*)",
       "Bash(dotnet remove:*)",
       "Read(//c/Users/joaon/Projetos/IA/Study Projects/demo-skill-mcp-server-net-core/JL.Commerce.Tecnology.Service/src/Application/**)",
       "Bash(dotnet build:*)",
-      "Bash(BASE=\"/c/Users/joaon/Projetos/IA/Study Projects/demo-skill-mcp-server-net-core/JL.Commerce.Tecnology.Service\" cd \"$BASE\")",
       "Read(//c/Users/joaon/Projetos/IA/Study Projects/demo-skill-mcp-server-net-core/JL.Commerce.Tecnology.Service/**)",
       "Bash(timeout 12 dotnet run --project \"src/Presentation/JL.Commerce.Tecnology.Service.Presentation.csproj\" --configuration Release)",
       "Bash(grep -E \".sln$|.slnx$\")",
@@ -30,13 +28,16 @@
       "Bash(ls /tmp/jl_guardrails_review_pending*)",
       "Bash(rm /tmp/jl_guardrails_review_pending)",
       "Bash(mkdir -p .claude/agents/reports)",
-      "Bash(find 'C:\\\\Users\\\\joaon\\\\Projetos\\\\IA\\\\Study Projects\\\\demo-skill-mcp-server-net-core\\\\JL.Commerce.Tecnology.Service/src/Presentation' -type f -name *.cs ! -path */obj/* ! -path */bin/*)",
-      "Bash(find 'C:\\\\Users\\\\joaon\\\\Projetos\\\\IA\\\\Study Projects\\\\demo-skill-mcp-server-net-core\\\\JL.Commerce.Tecnology.Service/src/' -maxdepth 3 -type d ! -path */obj/* ! -path */bin/*)",
-      "Bash(find \"C:\\\\Users\\\\joaon\\\\Projetos\\\\IA\\\\Study Projects\\\\demo-skill-mcp-server-net-core\\\\JL.Commerce.Tecnology.Service\\\\src\"\" -type f -name \"*Entity* \")",
-      "Bash(find 'C:\\\\Users\\\\joaon\\\\Projetos\\\\IA\\\\Study Projects\\\\demo-skill-mcp-server-net-core\\\\JL.Commerce.Tecnology.Service\\\\src\\\\Domain\\\\Abstractions' -type f -name *.cs)",
-      "Read(//c/Users/joaon/Projetos/IA/Study Projects/demo-skill-mcp-server-net-core/$TEMP/**)",
-      "Read(//c/Users/joaon/Projetos/IA/Study Projects/demo-skill-mcp-server-net-core/$TMP/**)",
-      "Read(//c/Users/joaon/Projetos/IA/Study Projects/demo-skill-mcp-server-net-core/**)"
+      "Bash(find 'C:\\Users\\joaon\\Projetos\\IA\\Study Projects\\demo-skill-mcp-server-net-core/JL.Commerce.Tecnology.Service/src/Presentation' -type f -name *.cs ! -path */obj/* ! -path */bin/*)",
+      "Bash(find 'C:\\Users\\joaon\\Projetos\\IA\\Study Projects\\demo-skill-mcp-server-net-core/JL.Commerce.Tecnology.Service/src/' -maxdepth 3 -type d ! -path */obj/* ! -path */bin/*)",
+      "Bash(find \"C:\\Users\\joaon\\Projetos\\IA\\Study Projects\\demo-skill-mcp-server-net-core/JL.Commerce.Tecnology.Service\\src\" -type f -name \"*Entity*\")",
+      "Bash(find 'C:\\Users\\joaon\\Projetos\\IA\\Study Projects\\demo-skill-mcp-server-net-core/JL.Commerce.Tecnology.Service/src/Domain/Abstractions' -type f -name *.cs)",
+      "Read(/tmp/**)",
+      "Read(//c/Users/joaon/Projetos/IA/Study Projects/demo-skill-mcp-server-net-core/**)",
+      "Bash(python3:*)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(where python:*)",
+      "Bash(node:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
@@ -51,7 +52,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "input=$(cat); echo \"$input\" | grep -qF 'appsettings.json' && echo 'BLOCKED: appsettings.json is protected. Edit it manually if intentional.' && exit 2 || exit 0"
+            "command": "input=$(cat); echo \"$input\" | grep -qE '\"file_path\"[[:space:]]*:[[:space:]]*\"[^\"]*appsettings\\.json' && echo 'BLOCKED: appsettings.json is protected. Edit it manually if intentional.' && exit 2 || exit 0"
           }
         ]
       }
@@ -74,6 +75,15 @@
             "command": "touch /tmp/jl_cs_modified"
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "input=$(cat); echo \"$input\" | grep -q 'git commit' && touch /tmp/jl_guardrails_pending || exit 0"
+          }
+        ]
       }
     ],
     "Stop": [
@@ -81,7 +91,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -f /tmp/jl_cs_modified ] && { rm /tmp/jl_cs_modified; BUILD_OUT=$(cd \"/c/Users/joaon/Projetos/IA/Study Projects/demo-skill-mcp-server-net-core/JL.Commerce.Tecnology.Service\" && dotnet build --no-restore -v q 2>&1); BUILD_RC=$?; echo \"$BUILD_OUT\" | tail -15; exit $BUILD_RC; } || exit 0"
+            "command": "BUILD_RC=0; if [ -f /tmp/jl_cs_modified ]; then rm /tmp/jl_cs_modified; BUILD_OUT=$(cd \"/c/Users/joaon/Projetos/IA/Study Projects/demo-skill-mcp-server-net-core/JL.Commerce.Tecnology.Service\" && dotnet build --no-restore -v q 2>&1); BUILD_RC=$?; echo \"$BUILD_OUT\" | tail -15; fi; if [ -f /tmp/jl_guardrails_pending ]; then rm /tmp/jl_guardrails_pending; echo \"Git commit detected -- automatically run the validate-guardrails-implementation agent now.\"; exit 2; fi; exit $BUILD_RC"
           }
         ]
       }

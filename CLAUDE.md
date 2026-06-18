@@ -6,10 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with th
 
 Two independent projects live at the root:
 
-| Directory | Purpose |
-|---|---|
-| `JL.Commerce.Tecnology.Service/` | Main microservice (Hexagonal Architecture + DDD + CQRS) |
-| `JL.DddScaffold.Mcp/` | Custom MCP server that scaffolds DDD aggregates for the service |
+| Directory                        | Purpose                                                         |
+| -------------------------------- | --------------------------------------------------------------- |
+| `JL.Commerce.Tecnology.Service/` | Main microservice (Hexagonal Architecture + DDD + CQRS)         |
+| `JL.DddScaffold.Mcp/`            | Custom MCP server that scaffolds DDD aggregates for the service |
 
 ---
 
@@ -46,39 +46,40 @@ No test implementations yet — `tests/UnitTests/` and `tests/IntegrationTests/`
 
 **Hexagonal Architecture + DDD + CQRS** with five projects:
 
-| Layer | Project Suffix | Role |
-|---|---|---|
-| Domain | `.Domain` | Aggregates, value objects, domain events, exceptions — zero external deps |
-| Application | `.Application` | CQRS handlers, FluentValidation validators, AutoMapper profiles, port interfaces |
-| Infrastructure.Data | `.Infrastructure.Data` | EF Core + PostgreSQL, repository implementations |
-| Infrastructure.Integration | `.Infrastructure.Integration` | MassTransit consumers/publishers, cache |
-| Presentation | `.Presentation` | ASP.NET Core Minimal API endpoints, Program.cs wiring |
+| Layer                      | Project Suffix                | Role                                                                             |
+| -------------------------- | ----------------------------- | -------------------------------------------------------------------------------- |
+| Domain                     | `.Domain`                     | Aggregates, value objects, domain events, exceptions — zero external deps        |
+| Application                | `.Application`                | CQRS handlers, FluentValidation validators, AutoMapper profiles, port interfaces |
+| Infrastructure.Data        | `.Infrastructure.Data`        | EF Core + PostgreSQL, repository implementations                                 |
+| Infrastructure.Integration | `.Infrastructure.Integration` | MassTransit consumers/publishers, cache                                          |
+| Presentation               | `.Presentation`               | ASP.NET Core Minimal API endpoints, Program.cs wiring                            |
 
-**Dependency rule**: Domain ← Application ← Infrastructure.* ← Presentation. Infrastructure layers reference Application (to implement its ports), never each other.
+**Dependency rule**: Domain ← Application ← Infrastructure.\* ← Presentation. Infrastructure layers reference Application (to implement its ports), never each other.
 
 ---
 
 ### Naming conventions
 
-| Artifact | C# type | Path |
-|---|---|---|
-| Aggregate | `sealed class : AggregateRoot<TId>` | `Domain/Aggregates/{Name}/{Name}.cs` |
-| Strongly-typed ID | `sealed record {Name}Id(Guid Value)` | `Domain/Aggregates/{Name}/{Name}Id.cs` |
-| Domain event | `sealed record : IDomainEvent` | `Domain/Events/{Name}CreatedEvent.cs` |
-| Domain exception | `sealed class : Exception` | `Domain/Exceptions/{Name}NotFoundException.cs` |
-| Command | `sealed record : IRequest<T>` | `Application/Commands/{Op}/{Op}Command.cs` |
-| Command handler | `sealed class` | `Application/Commands/{Op}/{Op}CommandHandler.cs` |
-| Command validator | `sealed class : AbstractValidator<T>` | `Application/Commands/{Op}/{Op}CommandValidator.cs` |
-| Query | `sealed record : IRequest<T>` | `Application/Queries/{Op}/{Op}Query.cs` |
-| Query handler | `sealed class` | `Application/Queries/{Op}/{Op}QueryHandler.cs` |
-| DTO | `record` | `Application/DTOs/{Name}Dto.cs` |
-| AutoMapper profile | `sealed class : Profile` | `Application/Mappings/{Name}MappingProfile.cs` |
-| Repository port | `interface` | `Application/Ports/I{Name}Repository.cs` |
-| EF configuration | `sealed class : IEntityTypeConfiguration<T>` | `Infrastructure.Data/Configurations/{Name}Configuration.cs` |
-| Repository impl | `sealed class` | `Infrastructure.Data/Repositories/{Name}Repository.cs` |
-| Endpoints | `static class` with extension method | `Presentation/Endpoints/{Name}Endpoints.cs` |
+| Artifact           | C# type                                      | Path                                                        |
+| ------------------ | -------------------------------------------- | ----------------------------------------------------------- |
+| Aggregate          | `sealed class : AggregateRoot<TId>`          | `Domain/Aggregates/{Name}/{Name}.cs`                        |
+| Strongly-typed ID  | `sealed record {Name}Id(Guid Value)`         | `Domain/Aggregates/{Name}/{Name}Id.cs`                      |
+| Domain event       | `sealed record : IDomainEvent`               | `Domain/Events/{Name}CreatedEvent.cs`                       |
+| Domain exception   | `sealed class : Exception`                   | `Domain/Exceptions/{Name}NotFoundException.cs`              |
+| Command            | `sealed record : IRequest<T>`                | `Application/Commands/{Op}/{Op}Command.cs`                  |
+| Command handler    | `sealed class`                               | `Application/Commands/{Op}/{Op}CommandHandler.cs`           |
+| Command validator  | `sealed class : AbstractValidator<T>`        | `Application/Commands/{Op}/{Op}CommandValidator.cs`         |
+| Query              | `sealed record : IRequest<T>`                | `Application/Queries/{Op}/{Op}Query.cs`                     |
+| Query handler      | `sealed class`                               | `Application/Queries/{Op}/{Op}QueryHandler.cs`              |
+| DTO                | `record`                                     | `Application/DTOs/{Name}Dto.cs`                             |
+| AutoMapper profile | `sealed class : Profile`                     | `Application/Mappings/{Name}MappingProfile.cs`              |
+| Repository port    | `interface`                                  | `Application/Ports/I{Name}Repository.cs`                    |
+| EF configuration   | `sealed class : IEntityTypeConfiguration<T>` | `Infrastructure.Data/Configurations/{Name}Configuration.cs` |
+| Repository impl    | `sealed class`                               | `Infrastructure.Data/Repositories/{Name}Repository.cs`      |
+| Endpoints          | `static class` with extension method         | `Presentation/Endpoints/{Name}Endpoints.cs`                 |
 
 **Records vs classes:**
+
 - `record` — commands, queries, DTOs, domain events, strongly-typed IDs
 - `sealed class` — aggregates, handlers, validators, repositories, EF configs, mapping profiles
 
@@ -149,11 +150,13 @@ Endpoints are registered via extension methods in `Presentation/Endpoints/` and 
 
 Three hooks are configured in `.claude/settings.local.json` and run automatically:
 
-| Hook | Trigger | Behavior |
-|---|---|---|
-| PreToolUse | Edit/Write targeting the protected config file | Blocks the edit (exit 2). Edit that file manually if intentional. |
-| PostToolUse | Edit/Write to any `.cs` file, or any `ddd-scaffold` tool | Sets flag `/tmp/jl_cs_modified` for the Stop hook. |
-| Stop | Turn end if `/tmp/jl_cs_modified` exists | Removes the flag, runs `dotnet build --no-restore -v q`, prints last 15 lines. |
+| Hook        | Trigger                                                  | Behavior                                                                                     |
+| ----------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| PreToolUse  | Edit/Write targeting the protected config file           | Blocks the edit (exit 2). Edit that file manually if intentional.                            |
+| PostToolUse | Edit/Write to any `.cs` file, or any `ddd-scaffold` tool | Sets flag `/tmp/jl_cs_modified` for the Stop hook.                                           |
+| PostToolUse | Bash call containing `git commit`                        | Sets flag `/tmp/jl_guardrails_pending` for the Stop hook.                                    |
+| Stop        | Turn end if `/tmp/jl_cs_modified` exists                 | Removes flag, runs `dotnet build --no-restore -v q`, prints last 15 lines.                   |
+| Stop        | Turn end if `/tmp/jl_guardrails_pending` exists          | Removes flag, exits 2 — re-invokes Claude to run `validate-guardrails-implementation`. |
 
 ---
 
@@ -161,14 +164,14 @@ Three hooks are configured in `.claude/settings.local.json` and run automaticall
 
 The `validate-guardrails-implementation` agent runs `ddd-reviewer` and `security-reviewer` in parallel and writes a consolidated report to `.claude/agents/reports/`.
 
-**Invocation is manual-only.** Two natural moments:
+**Invocation Modes.** :
 
-1. **On demand** — type a prompt such as:
+1. **On demand - Manual** — type a prompt such as:
    - `"revise my implementation with guardrails ddd security"`
    - `"review with guardrails"`
    - `"run guardrails review"`
 
-2. **After a git commit** — once you have committed your changes, follow up with a guardrails review prompt in the same session.
+2. **After a git commit - automatically** — once you have committed your changes, run agent automatically.
 
 **What the agent does:** invokes ddd-reviewer and security-reviewer concurrently, synthesises findings, and produces a structured report (Overall: PASS / NEEDS_ATTENTION / FAIL / SCAN_ERROR) with a recommended fix order.
 
@@ -188,62 +191,68 @@ dotnet build JL.DddScaffold.Mcp/src/JL.DddScaffold.Mcp/JL.DddScaffold.Mcp.csproj
 ### Available tools
 
 #### `scaffold_aggregate`
+
 Generates all ~23 files for a complete aggregate across all layers. Skips files that already exist.
 
-| Parameter | Type | Description |
-|---|---|---|
-| `srcPath` | string | Absolute path to the service's `src/` directory |
-| `rootNamespace` | string | Root namespace, e.g. `JL.Commerce.Tecnology.Service` |
-| `aggregateName` | string | PascalCase aggregate name, e.g. `Order` |
+| Parameter        | Type   | Description                                           |
+| ---------------- | ------ | ----------------------------------------------------- |
+| `srcPath`        | string | Absolute path to the service's `src/` directory       |
+| `rootNamespace`  | string | Root namespace, e.g. `JL.Commerce.Tecnology.Service`  |
+| `aggregateName`  | string | PascalCase aggregate name, e.g. `Order`               |
 | `propertiesJson` | string | JSON array of property definitions (see schema below) |
 
 **Post-generation manual steps (always required):**
+
 1. Add `DbSet<{Name}> {PluralName}` to `AppDbContext`
 2. Register DI in `Program.cs`: `builder.Services.AddScoped<I{Name}Repository, {Name}Repository>();`
 3. Register endpoints in `Program.cs`: `app.Map{Name}Endpoints();`
 4. Create EF migration: `dotnet ef migrations add Add{Name} --project src/Infrastructure.Data --startup-project src/Presentation`
 
 #### `scaffold_command`
+
 Adds a single custom command (command + handler + validator) to an existing aggregate.
 
-| Parameter | Type | Description |
-|---|---|---|
-| `srcPath` | string | Absolute path to `src/` |
-| `rootNamespace` | string | Root namespace |
-| `aggregateName` | string | Existing aggregate name |
-| `operationName` | string | Operation name without aggregate prefix, e.g. `Approve` → `OrderApproveCommand` |
-| `returnsGuid` | bool | `true` = `IRequest<Guid>`, `false` = `IRequest` (void) |
+| Parameter        | Type   | Description                                                                                                      |
+| ---------------- | ------ | ---------------------------------------------------------------------------------------------------------------- |
+| `srcPath`        | string | Absolute path to `src/`                                                                                          |
+| `rootNamespace`  | string | Root namespace                                                                                                   |
+| `aggregateName`  | string | Existing aggregate name                                                                                          |
+| `operationName`  | string | Operation name without aggregate prefix, e.g. `Approve` → `OrderApproveCommand`                                  |
+| `returnsGuid`    | bool   | `true` = `IRequest<Guid>`, `false` = `IRequest` (void)                                                           |
 | `propertiesJson` | string | JSON array of command parameters; include `{"name":"Id","type":"Guid"}` first for mutations on existing entities |
 
 #### `scaffold_query`
+
 Adds a single custom query (query + handler) to an existing aggregate.
 
-| Parameter | Type | Description |
-|---|---|---|
-| `srcPath` | string | Absolute path to `src/` |
-| `rootNamespace` | string | Root namespace |
-| `aggregateName` | string | Existing aggregate name |
-| `operationName` | string | Query operation name |
-| `returnsSingleItem` | bool | `true` = returns single DTO, `false` = returns list |
-| `parametersJson` | string | JSON array of query parameters |
+| Parameter           | Type   | Description                                         |
+| ------------------- | ------ | --------------------------------------------------- |
+| `srcPath`           | string | Absolute path to `src/`                             |
+| `rootNamespace`     | string | Root namespace                                      |
+| `aggregateName`     | string | Existing aggregate name                             |
+| `operationName`     | string | Query operation name                                |
+| `returnsSingleItem` | bool   | `true` = returns single DTO, `false` = returns list |
+| `parametersJson`    | string | JSON array of query parameters                      |
 
 #### `preview_scaffold`
+
 Dry-run of `scaffold_aggregate` — shows all file contents without writing anything. Use to review generated code before committing to file creation. Same parameters as `scaffold_aggregate`.
 
 #### `list_aggregates`
+
 Lists all aggregates in `Domain/Aggregates/` with summary info (has ID?, command count, query count).
 
-| Parameter | Type | Description |
-|---|---|---|
+| Parameter | Type   | Description             |
+| --------- | ------ | ----------------------- |
 | `srcPath` | string | Absolute path to `src/` |
 
 ### propertiesJson schema
 
 ```json
 [
-  {"name": "Name", "type": "string", "maxLength": 200, "required": true},
-  {"name": "Price", "type": "decimal", "precision": 18, "scale": 2},
-  {"name": "IsActive", "type": "bool"}
+  { "name": "Name", "type": "string", "maxLength": 200, "required": true },
+  { "name": "Price", "type": "decimal", "precision": 18, "scale": 2 },
+  { "name": "IsActive", "type": "bool" }
 ]
 ```
 
