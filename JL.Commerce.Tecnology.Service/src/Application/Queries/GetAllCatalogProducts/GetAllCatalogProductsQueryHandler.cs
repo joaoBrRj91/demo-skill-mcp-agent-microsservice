@@ -12,5 +12,11 @@ public sealed class GetAllCatalogProductsQueryHandler(ICatalogProductRepository 
     {
         var products = await repository.GetAllAsync(ct);
         return mapper.Map<IReadOnlyList<CatalogProductDto>>(products);
+
+
+
+
+
+        
     }
 }
