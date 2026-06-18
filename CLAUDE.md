@@ -147,25 +147,30 @@ Endpoints are registered via extension methods in `Presentation/Endpoints/` and 
 
 ### Hooks (automated behaviors)
 
-Two hooks are configured in `.claude/settings.local.json` and run automatically:
+Three hooks are configured in `.claude/settings.local.json` and run automatically:
 
 | Hook | Trigger | Behavior |
 |---|---|---|
-| PreToolUse | Edit/Write targeting the app settings config file | Blocks the edit (exit 2). Edit that file manually if intentional. |
-| PostToolUse | Edit/Write to any `.cs` file | Runs `dotnet build --no-restore` in the service root and shows the last 15 lines. No need to run build manually after editing C# files. |
+| PreToolUse | Edit/Write targeting the protected config file | Blocks the edit (exit 2). Edit that file manually if intentional. |
+| PostToolUse | Edit/Write to any `.cs` file, or any `ddd-scaffold` tool | Sets flag `/tmp/jl_cs_modified` for the Stop hook. |
+| Stop | Turn end if `/tmp/jl_cs_modified` exists | Removes the flag, runs `dotnet build --no-restore -v q`, prints last 15 lines. |
 
 ---
 
-### Automated Guardrails Review (proactive behavior)
+### Guardrails Review
 
-At the **start of every turn**, before responding to the user:
+The `validate-guardrails-implementation` agent runs `ddd-reviewer` and `security-reviewer` in parallel and writes a consolidated report to `.claude/agents/reports/`.
 
-1. Run: `ls /tmp/jl_guardrails_review_pending 2>/dev/null`
-2. If the file exists: invoke the `validate-guardrails-implementation` subagent using the Agent tool.
-3. Do not announce this check — proceed silently unless the file exists.
-4. After the subagent completes, continue with the user's message normally.
+**Invocation is manual-only.** Two natural moments:
 
-This flag is written by the Stop hook when `dotnet build` succeeds after `.cs` file changes. The review runs exactly once per successful build cycle.
+1. **On demand** — type a prompt such as:
+   - `"revise my implementation with guardrails ddd security"`
+   - `"review with guardrails"`
+   - `"run guardrails review"`
+
+2. **After a git commit** — once you have committed your changes, follow up with a guardrails review prompt in the same session.
+
+**What the agent does:** invokes ddd-reviewer and security-reviewer concurrently, synthesises findings, and produces a structured report (Overall: PASS / NEEDS_ATTENTION / FAIL / SCAN_ERROR) with a recommended fix order.
 
 ---
 

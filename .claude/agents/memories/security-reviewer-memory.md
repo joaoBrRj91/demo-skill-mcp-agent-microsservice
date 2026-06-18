@@ -1,7 +1,7 @@
 # security-reviewer Memory
 
 > Managed by the security-reviewer subagent. Do not edit manually unless correcting an error.
-> Last updated: 2026-06-14
+> Last updated: 2026-06-17 (re-scan run at commit 302e1e8)
 
 ---
 
@@ -9,13 +9,13 @@
 
 | Field | Value |
 |-------|-------|
-| Date | 2026-06-14 |
-| Git SHA | fcea111e11dd748dcb705aa9b67cb9ec314a212c |
-| Scanner used | Static fallback (Semgrep 1.166.0 installed; cloud rules returned 0 results without login) |
+| Date | 2026-06-17 |
+| Git SHA | 302e1e8ab49236b65e28f21ff24212126dfb49ed |
+| Scanner used | Static fallback (changed files scanned; pre-existing findings re-confirmed) |
 | Total findings | 9 |
-| Critical | 3 |
+| Critical | 4 |
 | High | 1 |
-| Medium | 5 |
+| Medium | 4 |
 | Low | 0 |
 
 ---

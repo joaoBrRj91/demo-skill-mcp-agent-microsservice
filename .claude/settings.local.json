@@ -29,7 +29,14 @@
       "Bash(semgrep scan:*)",
       "Bash(ls /tmp/jl_guardrails_review_pending*)",
       "Bash(rm /tmp/jl_guardrails_review_pending)",
-      "Bash(mkdir -p .claude/agents/reports)"
+      "Bash(mkdir -p .claude/agents/reports)",
+      "Bash(find 'C:\\\\Users\\\\joaon\\\\Projetos\\\\IA\\\\Study Projects\\\\demo-skill-mcp-server-net-core\\\\JL.Commerce.Tecnology.Service/src/Presentation' -type f -name *.cs ! -path */obj/* ! -path */bin/*)",
+      "Bash(find 'C:\\\\Users\\\\joaon\\\\Projetos\\\\IA\\\\Study Projects\\\\demo-skill-mcp-server-net-core\\\\JL.Commerce.Tecnology.Service/src/' -maxdepth 3 -type d ! -path */obj/* ! -path */bin/*)",
+      "Bash(find \"C:\\\\Users\\\\joaon\\\\Projetos\\\\IA\\\\Study Projects\\\\demo-skill-mcp-server-net-core\\\\JL.Commerce.Tecnology.Service\\\\src\"\" -type f -name \"*Entity* \")",
+      "Bash(find 'C:\\\\Users\\\\joaon\\\\Projetos\\\\IA\\\\Study Projects\\\\demo-skill-mcp-server-net-core\\\\JL.Commerce.Tecnology.Service\\\\src\\\\Domain\\\\Abstractions' -type f -name *.cs)",
+      "Read(//c/Users/joaon/Projetos/IA/Study Projects/demo-skill-mcp-server-net-core/$TEMP/**)",
+      "Read(//c/Users/joaon/Projetos/IA/Study Projects/demo-skill-mcp-server-net-core/$TMP/**)",
+      "Read(//c/Users/joaon/Projetos/IA/Study Projects/demo-skill-mcp-server-net-core/**)"
     ]
   },
   "enableAllProjectMcpServers": true,
@@ -74,7 +81,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -f /tmp/jl_cs_modified ] && {   rm /tmp/jl_cs_modified;   BUILD_OUT=$(cd \"/c/Users/joaon/Projetos/IA/Study Projects/demo-skill-mcp-server-net-core/JL.Commerce.Tecnology.Service\" && dotnet build --no-restore -v q 2>&1);   BUILD_RC=$?;   echo \"$BUILD_OUT\" | tail -15;   [ $BUILD_RC -eq 0 ] && {     REPO=\"/c/Users/joaon/Projetos/IA/Study Projects/demo-skill-mcp-server-net-core\";     GIT_SHA=$(git -C \"$REPO\" rev-parse HEAD 2>/dev/null || echo \"UNKNOWN\");     CHANGED=$({ git -C \"$REPO\" diff --name-only HEAD 2>/dev/null; git -C \"$REPO\" ls-files --others --exclude-standard \"$REPO/JL.Commerce.Tecnology.Service/src\" 2>/dev/null; } | grep -E \"[.]cs$\");     [ -z \"$CHANGED\" ] && CHANGED=\"(no tracked .cs changes - check git status)\";     { echo \"GIT_SHA=$GIT_SHA\"; echo \"TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)\"; echo \"CHANGED_FILES:\"; echo \"$CHANGED\"; } > /tmp/jl_guardrails_review_pending;   }; } || exit 0"
+            "command": "[ -f /tmp/jl_cs_modified ] && { rm /tmp/jl_cs_modified; BUILD_OUT=$(cd \"/c/Users/joaon/Projetos/IA/Study Projects/demo-skill-mcp-server-net-core/JL.Commerce.Tecnology.Service\" && dotnet build --no-restore -v q 2>&1); BUILD_RC=$?; echo \"$BUILD_OUT\" | tail -15; exit $BUILD_RC; } || exit 0"
           }
         ]
       }

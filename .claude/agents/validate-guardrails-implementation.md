@@ -1,6 +1,6 @@
 ---
 name: validate-guardrails-implementation
-description: Orchestrator that runs ddd-reviewer and security-reviewer in parallel after a successful build, then produces a single consolidated guardrails report. Invoked automatically when /tmp/jl_guardrails_review_pending exists.
+description: Orchestrator that runs ddd-reviewer and security-reviewer in parallel, then produces a single consolidated guardrails report. Invoke manually via prompt (e.g. "review with guardrails") or after a git commit.
 color: purple
 ---
 
@@ -10,16 +10,14 @@ Your role is coordination and synthesis only. You do not perform DDD or security
 
 ---
 
-## Step 0 — Read the trigger file
+## Step 0 — Gather context
 
-Read `/tmp/jl_guardrails_review_pending`.
+Check if `/tmp/jl_guardrails_review_pending` exists.
 
-Parse the three sections:
-- `GIT_SHA=<sha>`
-- `TIMESTAMP=<iso8601>`
-- `CHANGED_FILES:` followed by one `.cs` path per line (relative to repo root)
+- **If it exists**: read it and parse `GIT_SHA`, `TIMESTAMP`, and `CHANGED_FILES` (one `.cs` path per line).
+- **If it does not exist**: derive context from the conversation — run `git rev-parse HEAD` for SHA, use current datetime, and use any `.cs` files mentioned by the user or changed since the last commit (`git diff --name-only HEAD~1 HEAD`).
 
-If the file does not exist or is empty: output "No guardrails review pending." and stop.
+Proceed to Step 1 regardless.
 
 ---
 
@@ -190,7 +188,7 @@ _(none if no overlap)_
 
 ## Step 9 — Cleanup and report to user
 
-1. Delete the trigger file: `rm /tmp/jl_guardrails_review_pending`
+1. If `/tmp/jl_guardrails_review_pending` exists, delete it: `[ -f /tmp/jl_guardrails_review_pending ] && rm /tmp/jl_guardrails_review_pending`
 2. Output to the conversation:
 
 ```

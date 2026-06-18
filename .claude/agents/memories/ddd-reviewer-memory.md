@@ -1,7 +1,7 @@
 # ddd-reviewer Memory
 
 > Managed by the ddd-reviewer subagent. Do not edit manually unless correcting an error.
-> Last updated: 2026-06-14
+> Last updated: 2026-06-17
 
 ---
 
@@ -35,6 +35,8 @@
 |-----|------|------|-------------|----------|
 | V004 | II2  | `src/Infrastructure.Integration/Messaging/Consumers/CatalogProductCreatedConsumer.cs` | — | No consumer existed for `CatalogProductCreatedEvent`. Fixed by creating `CatalogProductCreatedConsumer` and registering it in MassTransit. | 2026-06-09 |
 | V005 | P4   | `src/Presentation/JL.Commerce.Tecnology.Service.Presentation.csproj`                  | 13 | `Swashbuckle.AspNetCore.ReDoc` package removed; `/docs` now served via native `app.MapGet` static HTML. | 2026-06-09 |
+| V007 | D5   | `src/Domain/Aggregates/Entity/Entity.cs`                                               | 11 | Property `UpdatedDate` renamed to `UpdatedAt` — compile-breaking name mismatch resolved. | 2026-06-17 |
+| V008 | ID3  | `src/Infrastructure.Data/Configurations/EntityConfiguration.cs`                        | 30 | `.Property(e => e.UpdatedAt)` now resolves correctly after V007 fix. | 2026-06-17 |
 
 ---
 
