@@ -8,6 +8,7 @@ public sealed class Entity : AggregateRoot<EntityId>
     public string Name { get; private set; } = default!;
     public string Description { get; private set; } = default!;
     public DateTime CreatedAt { get; private set; }
+    public DateTime? UpdatedAt { get; private set; }
 
     private Entity() { }  // EF Core constructor
 
@@ -28,5 +29,6 @@ public sealed class Entity : AggregateRoot<EntityId>
     {
         Name        = name;
         Description = description;
+        UpdatedAt   = DateTime.UtcNow;
     }
 }

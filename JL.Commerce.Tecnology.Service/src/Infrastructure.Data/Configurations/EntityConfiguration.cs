@@ -27,6 +27,8 @@ public sealed class EntityConfiguration : IEntityTypeConfiguration<Entity>
         builder.Property(e => e.CreatedAt)
             .IsRequired();
 
+        builder.Property(e => e.UpdatedAt);
+
         builder.Ignore(e => e.DomainEvents);
     }
 }
