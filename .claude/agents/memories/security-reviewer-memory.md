@@ -1,7 +1,7 @@
 # security-reviewer Memory
 
 > Managed by the security-reviewer subagent. Do not edit manually unless correcting an error.
-> Last updated: 2026-06-17 (re-scan run at commit 302e1e8)
+> Last updated: 2026-06-18
 
 ---
 
@@ -9,9 +9,9 @@
 
 | Field | Value |
 |-------|-------|
-| Date | 2026-06-17 |
-| Git SHA | 302e1e8ab49236b65e28f21ff24212126dfb49ed |
-| Scanner used | Static fallback (changed files scanned; pre-existing findings re-confirmed) |
+| Date | 2026-06-18 |
+| Git SHA | 93ab2fe128d908147431074c7de83e89b3b39fde |
+| Scanner used | Semgrep 1.166.0 (MCP plugin) + Static fallback cross-validation |
 | Total findings | 9 |
 | Critical | 4 |
 | High | 1 |
@@ -48,3 +48,4 @@
 ## Project-Specific Notes
 
 - 2026-06-14: Initial scan completed at commit a54d1ca. MassTransit is pinned to 8.5.5 (9+ requires paid license). InMemory transport is intentional for local dev but must be replaced with RabbitMQ (UsingRabbitMq) for any production deployment.
+- 2026-06-18: Re-scan at commit 93ab2fe (Entity.cs added UpdatedAt field). No new security findings introduced by the change. All 9 prior findings remain OPEN.
