@@ -1,7 +1,7 @@
 # ddd-reviewer Memory
 
 > Managed by the ddd-reviewer subagent. Do not edit manually unless correcting an error.
-> Last updated: 2026-06-17
+> Last updated: 2026-06-18
 
 ---
 
@@ -11,6 +11,7 @@
 |-----------------|-----------|-------------|---------------------|----------------------------|--------------|
 | CatalogProduct  | VIOLATION | PASS        | PASS                | PASS                       | VIOLATION    |
 | Entity          | PASS      | PASS        | PASS                | PASS                       | VIOLATION    |
+| User            | PASS      | VIOLATION   | PASS                | PASS                       | VIOLATION    |
 
 > Status values: `PASS` | `VIOLATION` | `NOT_REVIEWED`
 > Set to `PASS` only after reviewing ALL files in that aggregate+layer combination.
@@ -26,6 +27,8 @@
 | V002 | D1   | `src/Application/Class1.cs`                                                                       | 1    | Leftover scaffold placeholder `Class1` in Application project; must be removed. |
 | V003 | D1   | `src/Infrastructure.Data/Class1.cs`                                                               | 1    | Leftover scaffold placeholder `Class1` in Infrastructure.Data project; must be removed. |
 | V006 | P1   | `src/Presentation/Endpoints/CatalogProductEndpoints.cs`                                           | 124  | `UpdateCatalogProductRequest` record is defined inside `CatalogProductEndpoints.cs`. Data-contract types must not be declared inside endpoint files. |
+| V009 | A3+A4 | `src/Application/Commands/CreateUser/CreateUserCommandHandler.cs`                                | 12   | Handler is a stub — returns `Guid.NewGuid()` without calling `User.Create()`, raising domain events, or persisting anything. |
+| V010 | P1   | `src/Presentation/Endpoints/UserEndpoints.cs`                                                     | 115  | `UpdateUserRequest` declared inside endpoint file. Move to `src/Application/Commands/UpdateUser/UpdateUserRequest.cs`. |
 
 ---
 
