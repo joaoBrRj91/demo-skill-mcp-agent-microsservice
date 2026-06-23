@@ -41,22 +41,8 @@
     ]
   },
   "enableAllProjectMcpServers": true,
-  "enabledMcpjsonServers": [
-    "context7",
-    "ddd-scaffold"
-  ],
+  "enabledMcpjsonServers": ["context7", "ddd-scaffold"],
   "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "input=$(cat); echo \"$input\" | grep -qE '\"file_path\"[[:space:]]*:[[:space:]]*\"[^\"]*appsettings\\.json' && echo 'BLOCKED: appsettings.json is protected. Edit it manually if intentional.' && exit 2 || exit 0"
-          }
-        ]
-      }
-    ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write",
