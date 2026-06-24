@@ -14,11 +14,11 @@ description: >
 Generates three documents in mandatory sequence from an existing `Spec.md`. Each document
 uses all preceding ones as context, so the order is non-negotiable:
 
-| Order | File              | Context used                                    |
-|-------|-------------------|-------------------------------------------------|
-| 1     | `Plan.md`         | `Spec.md`                                       |
-| 2     | `Constitution.md` | `Spec.md` + `Plan.md`                           |
-| 3     | `Tasks.md`        | `Spec.md` + `Plan.md` + `Constitution.md`       |
+| Order | File              | Context used                              |
+| ----- | ----------------- | ----------------------------------------- |
+| 1     | `Plan.md`         | `Spec.md`                                 |
+| 2     | `Constitution.md` | `Spec.md` + `Plan.md`                     |
+| 3     | `Tasks.md`        | `Spec.md` + `Plan.md` + `Constitution.md` |
 
 Skip any file that already exists — warn the user and continue to the next.
 
@@ -27,16 +27,20 @@ Skip any file that already exists — warn the user and continue to the next.
 ## Step 1 — Locate the spec folder
 
 **If a path was passed** as an argument (e.g. `/sdd-spec specs/JL.Commerce.Tecnology.Service/Features/ProcessRefund`):
+
 - Resolve it to an absolute path and use it as the spec folder.
 
 **If no path was given**, ask:
+
 > "Which feature are you speccing? Tell me:
+>
 > 1. The service name (e.g. `JL.Commerce.Tecnology.Service`)
 > 2. The feature folder name (e.g. `ProcessRefund`)
 >
 > Or paste the full path to the spec folder."
 
 The canonical folder pattern is:
+
 ```
 <repo-root>/specs/{ServiceName}/Features/{FeatureName}/
 ```
@@ -67,6 +71,7 @@ verbatim; Plan.md translates business intent into engineering decisions.
 # Implementation Plan: {FeatureName}
 
 ## Architecture Overview
+
 <bullet list of affected layers and the key types in each>
 
 ---
@@ -74,22 +79,28 @@ verbatim; Plan.md translates business intent into engineering decisions.
 ## Domain Layer
 
 ### Aggregate: {Name}
+
 `Domain/Aggregates/{Name}/{Name}.cs`
 <properties, factory method signature, mutation methods, domain events raised, EF parameterless ctor>
 
 ### Strongly-Typed ID
+
 `Domain/Aggregates/{Name}/{Name}Id.cs` — sealed record(Guid Value) with static New() and ToString()
 
 ### Value Objects (if any)
+
 <file path, fields — use classes not records when EF owns them>
 
 ### Enumerations (if any)
+
 <file path, values>
 
 ### Domain Events
+
 `Domain/Events/{Name}{Verb}Event.cs` — sealed record : IDomainEvent
 
 ### Domain Exceptions
+
 `Domain/Exceptions/{Name}NotFoundException.cs` etc.
 
 ---
@@ -97,23 +108,30 @@ verbatim; Plan.md translates business intent into engineering decisions.
 ## Application Layer
 
 ### Ports
+
 `Application/Ports/I{Name}Repository.cs` — method signatures
 
 ### Command: {Verb}{Name}Command
+
 `Application/Commands/{Verb}{Name}/`
+
 - **Command** — sealed record : IRequest<Guid> (or IRequest for void)
 - **Handler** — numbered steps showing the handler algorithm
 - **Validator** — FluentValidation rules, one per property
 
 ### Query: Get{Name}...Query (repeat per query)
+
 `Application/Queries/Get{Name}.../`
+
 - **Query** — sealed record : IRequest<{Dto}?>
 - **Handler** — numbered steps
 
 ### DTOs
+
 `Application/DTOs/{Name}Dto.cs` — fields
 
 ### AutoMapper Profile
+
 `Application/Mappings/{Name}MappingProfile.cs` — mapping pairs
 
 ---
@@ -121,18 +139,23 @@ verbatim; Plan.md translates business intent into engineering decisions.
 ## Infrastructure.Data
 
 ### EF Configuration
+
 `Infrastructure.Data/Configurations/{Name}Configuration.cs`
 <Ignore DomainEvents, HasConversion for enums, OwnsOne/OwnsMany for value objects>
 
 ### Repository
+
 `Infrastructure.Data/Repositories/{Name}Repository.cs`
 
 ### AppDbContext
+
 Add `DbSet<{Name}> {PluralName} {{ get; set; }}` to AppDbContext.cs
 
 ### EF Migration
 ```
+
 dotnet ef migrations add Add{Name} --project src/Infrastructure.Data --startup-project src/Presentation
+
 ```
 
 ---
@@ -178,6 +201,7 @@ dotnet ef migrations add Add{Name} --project src/Infrastructure.Data --startup-p
 ```
 
 **Rules to follow when writing Plan.md:**
+
 - Naming conventions from `CLAUDE.md` are mandatory — aggregates, commands, queries, repos, endpoints must follow the exact suffix and casing rules.
 - Root namespace is always `JL.Commerce.Tecnology.Service`.
 - Never include `Id`, `CreatedAt`, or `UpdatedAt` in property lists — auto-generated.
@@ -205,50 +229,59 @@ not just what it should do. Use RFC 2119 conformance language throughout: **MUST
 ---
 
 ## Preamble
+
 <explains the role of this document and how it relates to Spec.md and Plan.md>
 
 ---
 
 ## Article I — {Primary Domain Concern}
+
 (e.g., "Order State Machine", "Payment Lifecycle", "Refund Eligibility Rules")
 
 ### § 1.1 Valid States (if stateful)
+
 <state table with terminal flag>
 
 ### § 1.2 Valid Transitions (if stateful)
+
 <ASCII state diagram>
 
 ### § 1.3 Workflow Laws
-| ID | Rule |
-|----|------|
-| CON-WF-1 | ... |
+
+| ID       | Rule |
+| -------- | ---- |
+| CON-WF-1 | ...  |
 
 ---
 
 ## Article II — Domain Invariants
+
 Trace each rule to its Spec.md business rule (e.g., "Source: BR-1").
 
-| ID | Source | Rule |
-|----|--------|------|
-| CON-DI-1 | BR-1 | ... |
+| ID       | Source | Rule |
+| -------- | ------ | ---- |
+| CON-DI-1 | BR-1   | ...  |
 
 ---
 
 ## Article III — Idempotency & Concurrency Laws (if applicable)
-| ID | Rule |
-|----|------|
-| CON-IC-1 | ... |
+
+| ID       | Rule |
+| -------- | ---- |
+| CON-IC-1 | ...  |
 
 ---
 
 ## Article IV — Data Security Mandates
 
 ### § 4.1 Request and Response Sanitization
-| ID | Rule |
-|----|------|
+
+| ID        | Rule                                            |
+| --------- | ----------------------------------------------- |
 | CON-SEC-1 | All incoming string fields MUST be sanitized... |
 
 ### § 4.2 Sensitive Data at Rest (include only if feature handles PII/PCI)
+
 <classification table: field, classification, storage rule, API display rule>
 | ID | Rule |
 |----|------|
@@ -257,26 +290,30 @@ Trace each rule to its Spec.md business rule (e.g., "Source: BR-1").
 ---
 
 ## Article V — Governance and Compliance
-| ID | Rule |
-|----|------|
-| CON-GOV-1 | ... |
+
+| ID        | Rule |
+| --------- | ---- |
+| CON-GOV-1 | ...  |
 
 ---
 
 ## Article VI — API Contract Invariants
-| ID | Rule |
-|----|------|
-| CON-API-1 | ... |
+
+| ID        | Rule |
+| --------- | ---- |
+| CON-API-1 | ...  |
 
 ---
 
 ## Appendix — Constitution Rule Index
-| Article | ID Range | Domain |
-|---------|----------|--------|
-| I | CON-WF-1 – CON-WF-N | ... |
+
+| Article | ID Range            | Domain |
+| ------- | ------------------- | ------ |
+| I       | CON-WF-1 – CON-WF-N | ...    |
 ```
 
 **Rules to follow when writing Constitution.md:**
+
 - Every constraint gets a unique `CON-{DOMAIN}-{N}` ID. Domains: `WF` (workflow), `DI` (domain invariants), `IC` (idempotency/concurrency), `SEC` (security), `GOV` (governance), `API` (API contract).
 - Omit articles that are not applicable (e.g., skip § 4.2 if no PII/PCI is involved), but always include Articles II, IV § 4.1, and VI.
 - Security article IV § 4.1 is mandatory for every feature — all string input must be sanitized and error responses must never expose stack traces.
@@ -297,6 +334,7 @@ Constitution-mandated additions not in the plan.
 # Tasks — {FeatureName}
 
 ## Domain
+
 - [ ] Create `{Name}Id` strongly-typed ID (`Domain/Aggregates/{Name}/{Name}Id.cs`)
 - [ ] Create `{Name}` aggregate with factory method and mutation methods (`Domain/Aggregates/{Name}/{Name}.cs`)
 - [ ] Create value objects: {list} (`Domain/Aggregates/{Name}/...`)
@@ -305,6 +343,7 @@ Constitution-mandated additions not in the plan.
 - [ ] Create domain exceptions: {list} (`Domain/Exceptions/...`)
 
 ## Application
+
 - [ ] Define `I{Name}Repository` port (`Application/Ports/I{Name}Repository.cs`)
 - [ ] Define `I{ExternalAdapter}` port if applicable (`Application/Ports/...`)
 - [ ] Create `{Verb}{Name}Command` + handler + validator (`Application/Commands/{Verb}{Name}/`)
@@ -315,16 +354,19 @@ Constitution-mandated additions not in the plan.
 - [ ] Create `{Name}MappingProfile` (`Application/Mappings/...`)
 
 ## Infrastructure.Data
+
 - [ ] Create `{Name}Configuration` EF config — ignore DomainEvents, configure owned types (`Infrastructure.Data/Configurations/...`)
 - [ ] Create `{Name}Repository` (`Infrastructure.Data/Repositories/...`)
 - [ ] Add `DbSet<{Name}> {PluralName}` to `AppDbContext`
 - [ ] Run EF migration: `dotnet ef migrations add Add{Name} --project src/Infrastructure.Data --startup-project src/Presentation`
 
 ## Infrastructure.Integration
+
 - [ ] Create `{Adapter}` implementing `I{ExternalAdapter}` (`Infrastructure.Integration/...`)
 - [ ] Create `{Name}CreatedConsumer` MassTransit consumer (`Infrastructure.Integration/Messaging/Consumers/...`)
 
 ## Presentation
+
 - [ ] Create `{Name}Endpoints` with route registrations (`Presentation/Endpoints/{Name}Endpoints.cs`)
 - [ ] Register DI in `Program.cs`: `AddScoped<I{Name}Repository, {Name}Repository>()`
 - [ ] Register external adapter in `Program.cs` if applicable
@@ -332,6 +374,7 @@ Constitution-mandated additions not in the plan.
 - [ ] Call `app.Map{Name}Endpoints()` in `Program.cs`
 
 ## Verification
+
 - [ ] `dotnet build` — zero errors
 - [ ] `dotnet test` — no regressions
 ```
@@ -347,9 +390,9 @@ After all files are written (or skipped), report:
 ```
 SDD complete for {FeatureName}:
 
-  Plan.md         — ✓ created  (or ⚠ skipped, already exists)
-  Constitution.md — ✓ created  (or ⚠ skipped, already exists)
-  Tasks.md        — ✓ created  (or ⚠ skipped, already exists)
+  Plan.md         — ✓ created  (or ⚠ skipped, already exists and not empty)
+  Constitution.md — ✓ created  (or ⚠ skipped, already exists and not empty)
+  Tasks.md        — ✓ created  (or ⚠ skipped, already exists and not empty)
 
 Next: review each document, then start implementation following Tasks.md order.
 ```
