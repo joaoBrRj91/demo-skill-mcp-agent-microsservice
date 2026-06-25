@@ -234,14 +234,89 @@ Claude launches the `ddd-reviewer` subagent, which reads the canonical reference
 
 ### 3. Automated hooks
 
-Two hooks run automatically without any manual action:
+Five hooks run automatically without any manual action:
 
 | Hook | When | What happens |
 |---|---|---|
 | `PreToolUse` | Any edit to the app settings config file | Blocks the edit (edit it manually if intentional) |
-| `PostToolUse` | Any edit to a `.cs` file | Runs `dotnet build --no-restore` and shows the last 15 lines |
+| `PostToolUse` | Any edit to a `.cs` file or any `ddd-scaffold` MCP call | Sets a flag; Stop hook runs `dotnet build --no-restore` and prints the last 15 lines |
+| `PostToolUse` | Any `git commit` Bash call | Sets a flag for the guardrails Stop hook |
+| `Stop` | End of turn if the build flag is set | Runs `dotnet build --no-restore -v q` automatically |
+| `Stop` | End of turn if the guardrails flag is set | Re-invokes Claude to run `validate-guardrails-implementation` automatically |
 
-This means: **edit a `.cs` file → build runs automatically**. You see compile errors immediately without running build manually.
+This means: **edit a `.cs` file → build runs automatically; commit code → DDD + security review runs automatically**.
+
+---
+
+### 4. Security Reviewer Agent
+
+A Claude Code subagent defined in `.claude/agents/security-reviewer.md`. It scans code for security issues using **Semgrep** (with a static-analysis fallback) and uses the **context7 MCP** to ground fix suggestions in current .NET library docs.
+
+**Checks performed:**
+
+| Category | What is checked |
+|---|---|
+| Credentials | Hardcoded secrets, JWT placeholders |
+| Authorization | Unauthenticated mutation endpoints |
+| Middleware | Missing security headers, exception handling |
+| Injection | Raw SQL, EF Core interpolation |
+| Data exposure | Serialized internals, PII leakage |
+
+**To invoke it**, tell Claude Code:
+
+```
+Review the Order aggregate for security issues
+```
+
+---
+
+### 5. Validate-Guardrails Orchestrator
+
+Defined in `.claude/agents/validate-guardrails-implementation.md`. This orchestrator runs **ddd-reviewer and security-reviewer in parallel**, cross-references their findings, and writes a consolidated report to `.claude/agents/reports/`.
+
+**Overall assessment values:** `PASS` / `NEEDS_ATTENTION` / `FAIL` / `SCAN_ERROR`
+
+**Invocation modes:**
+
+- **Automatic** — triggered after every `git commit` via the Stop hook (no action needed)
+- **Manual** — tell Claude Code: `"review with guardrails"` or `"run guardrails review"`
+
+The orchestrator classifies changed files by layer (Domain / Application / Infrastructure.Data / Infrastructure.Integration / Presentation), checks agent memory files to skip already-reviewed code, and determines the recommended fix order for any findings.
+
+---
+
+### 6. Spec-Driven Development (SDD) Workflow
+
+Features are fully specified before code is written. The `sdd-spec` skill takes an existing `Spec.md` and generates three implementation documents in the correct order.
+
+**Document sequence:**
+
+| File | Who writes it | What goes in it |
+|---|---|---|
+| `Spec.md` | You (manually) | Business rules only — no file paths, no class names |
+| `Plan.md` | `sdd-spec` skill | All five layers: file paths, class names, method signatures, code snippets |
+| `Constitution.md` | `sdd-spec` skill | Immutable constraints using RFC 2119 language (MUST / MUST NOT / SHALL), each with a `CON-*` ID |
+| `Tasks.md` | `sdd-spec` skill | Checkbox list — one task per file, each referencing the `CON-*` rules it satisfies |
+
+**`specs/` directory layout:**
+
+```
+specs/{ServiceName}/Features/{FeatureName}/
+├── Spec.md
+├── Plan.md
+├── Constitution.md
+└── Tasks.md
+```
+
+**To invoke it**, tell Claude Code:
+
+```
+Run the sdd-spec skill for CreateOrderDomainBusiness
+```
+
+The skill skips any file that already exists and is non-empty, so it is safe to re-run after editing `Spec.md`.
+
+**Working example:** `specs/JL.Commerce.Tecnology.Service/Features/CreateOrderDomainBusiness/`
 
 ---
 
@@ -373,12 +448,30 @@ The scaffold templates live in `JL.DddScaffold.Mcp/`. Modifying the templates le
 │   └── src/
 │       └── JL.DddScaffold.Mcp/
 │
+├── specs/                           ← SDD feature specifications
+│   └── JL.Commerce.Tecnology.Service/
+│       └── Features/
+│           └── CreateOrderDomainBusiness/
+│               ├── Spec.md          ← business rules (written manually)
+│               ├── Plan.md          ← implementation plan (generated)
+│               ├── Constitution.md  ← immutable constraints (generated)
+│               └── Tasks.md         ← checkbox task list (generated)
+│
 ├── .claude/
 │   ├── agents/
-│   │   ├── ddd-reviewer.md          ← DDD compliance reviewer subagent
-│   │   └── references/
-│   │       └── project-architecture-reference.md
-│   └── settings.local.json          ← hooks configuration
+│   │   ├── ddd-reviewer.md                      ← DDD compliance reviewer subagent
+│   │   ├── security-reviewer.md                 ← OWASP/Semgrep security reviewer subagent
+│   │   ├── validate-guardrails-implementation.md ← orchestrator (runs both in parallel)
+│   │   ├── memories/                            ← per-agent memory files
+│   │   │   ├── ddd-reviewer-memory.md
+│   │   │   └── security-reviewer-memory.md
+│   │   ├── references/
+│   │   │   └── project-architecture-reference.md
+│   │   └── reports/                             ← guardrails consolidated reports
+│   ├── skills/
+│   │   ├── scaffold-aggregate/SKILL.md          ← wraps MCP scaffold_aggregate tool
+│   │   └── sdd-spec/SKILL.md                   ← generates Plan/Constitution/Tasks from Spec
+│   └── settings.local.json                      ← hooks configuration
 │
 ├── .mcp.json                        ← MCP server registration
 └── CLAUDE.md                        ← instructions for Claude Code

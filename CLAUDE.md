@@ -148,7 +148,7 @@ Endpoints are registered via extension methods in `Presentation/Endpoints/` and 
 
 ### Hooks (automated behaviors)
 
-Three hooks are configured in `.claude/settings.local.json` and run automatically:
+Five hooks are configured in `.claude/settings.local.json` and run automatically:
 
 | Hook        | Trigger                                                  | Behavior                                                                                     |
 | ----------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
@@ -174,6 +174,30 @@ The `validate-guardrails-implementation` agent runs `ddd-reviewer` and `security
 2. **After a git commit - automatically** — once you have committed your changes, run agent automatically.
 
 **What the agent does:** invokes ddd-reviewer and security-reviewer concurrently, synthesises findings, and produces a structured report (Overall: PASS / NEEDS_ATTENTION / FAIL / SCAN_ERROR) with a recommended fix order.
+
+---
+
+### Spec-Driven Development (SDD)
+
+Features are specified before any code is written. The `sdd-spec` skill reads an existing `Spec.md` and generates the three implementation documents.
+
+**`specs/` directory convention:**
+
+```
+specs/{ServiceName}/Features/{FeatureName}/
+├── Spec.md          ← written manually — business rules only, no code/file paths
+├── Plan.md          ← generated — implementation detail: layers, files, class names, method sigs
+├── Constitution.md  ← generated — immutable constraints with RFC 2119 language (CON-* IDs)
+└── Tasks.md         ← generated — checkbox list, one task per file, with CON-* rule references
+```
+
+**When to invoke:** after writing `Spec.md`, before any code is scaffolded.
+
+**How to invoke:** tell Claude Code `"run the sdd-spec skill for <FeatureName>"` or type `/sdd-spec`.
+
+**Skip logic:** the skill skips any file that already exists and is non-empty — safe to re-run after editing `Spec.md`.
+
+**Canonical example:** `specs/JL.Commerce.Tecnology.Service/Features/CreateOrderDomainBusiness/`
 
 ---
 
