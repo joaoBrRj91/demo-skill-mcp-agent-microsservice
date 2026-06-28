@@ -49,7 +49,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "input=$(cat); echo \"$input\" | grep -qE '[.]cs\"' && touch /tmp/jl_cs_modified || exit 0"
+            "command": "bash .claude/hooks/post-edit-write-cs-modified.sh"
           }
         ]
       },
@@ -58,7 +58,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "touch /tmp/jl_cs_modified"
+            "command": "bash .claude/hooks/post-ddd-scaffold-cs-modified.sh"
           }
         ]
       },
@@ -67,7 +67,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "input=$(cat); echo \"$input\" | grep -q 'git commit' && touch /tmp/jl_guardrails_pending || exit 0"
+            "command": "bash .claude/hooks/post-bash-git-commit.sh"
           }
         ]
       }
@@ -77,7 +77,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "BUILD_RC=0; if [ -f /tmp/jl_cs_modified ]; then rm /tmp/jl_cs_modified; BUILD_OUT=$(cd \"/c/Users/joaon/Projetos/IA/Study Projects/demo-skill-mcp-server-net-core/JL.Commerce.Tecnology.Service\" && dotnet build --no-restore -v q 2>&1); BUILD_RC=$?; echo \"$BUILD_OUT\" | tail -15; fi; if [ -f /tmp/jl_guardrails_pending ]; then rm /tmp/jl_guardrails_pending; echo \"Git commit detected -- automatically run the validate-guardrails-implementation agent now.\"; exit 2; fi; exit $BUILD_RC"
+            "command": "bash .claude/hooks/stop-build-guardrails.sh"
           }
         ]
       }

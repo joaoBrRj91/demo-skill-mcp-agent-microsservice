@@ -70,4 +70,10 @@ Desktop.ini
 # Cursor local data (optional but usually desired)
 .cursor/
 
+
+# Docs
 **/Docs/
+
+# Claude local data
+**/settings.local.json
+**/settings.json
