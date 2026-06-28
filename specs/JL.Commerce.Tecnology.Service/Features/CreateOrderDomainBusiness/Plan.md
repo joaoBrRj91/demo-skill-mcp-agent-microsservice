@@ -28,7 +28,7 @@ Follows the project's Hexagonal Architecture + DDD + CQRS pattern across five la
 ### Value Objects
 Defined as classes (not records) because EF Core owns them.
 
-- `Domain/Aggregates/Order/OrderItem.cs` — CatalogProductId (Guid), Quantity (int), UnitPrice (decimal)
+- `Domain/Aggregates/Order/OrderItem.cs` — CatalogProductId (Guid), Quantity (int), UnitPrice (decimal); all properties are init-only — UnitPrice is captured at creation and never recalculated (BR-3)
 - `Domain/Aggregates/Order/PaymentDetails.cs` — Method (PaymentMethod), CardNumber (string?), HolderName (string?), Expiry (string?), Cvv (string?), PixKey (string?)
 - `Domain/Aggregates/Order/ShippingAddress.cs` — Street, City, State, ZipCode, Country (all string)
 

@@ -161,3 +161,5 @@ The payment gateway integration is initially backed by a mock that simulates suc
 | 10 | Missing PixKey                       | POST with method=Pix, no pixKey                     | 422 Unprocessable Entity                              |
 | 11 | Item quantity below minimum          | POST with quantity=0                                | 422 Unprocessable Entity                              |
 | 12 | Attempt to re-process resolved order | ProcessOrder called on Processed/Error order        | Domain exception; status unchanged                    |
+| 13 | Price snapshot is preserved          | Valid POST with items[].unitPrice=9.99; GET after processing completes | Stored unitPrice equals 9.99 — no recalculation |
+| 14 | Unsupported payment method           | POST with payment.method="BankTransfer"             | 422 Unprocessable Entity                              |

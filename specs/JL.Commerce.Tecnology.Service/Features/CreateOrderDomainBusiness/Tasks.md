@@ -81,6 +81,8 @@
 - [ ] `GET /api/v1/orders/{transactionId}` returns 200 while processing, 200 with full `OrderDto` once done, 404 for unknown UUID
 - [ ] Repeated `POST` with same `TransactionId` returns existing order status without creating a duplicate (CON-IC-2)
 - [ ] Domain exception raised when attempting to re-process a `Processed` or `Error` order — status unchanged (CON-WF-3, CON-WF-6)
+- [ ] `POST /api/v1/orders` with `payment.method = "BankTransfer"` (or any unsupported value) returns HTTP 422 (BR-4)
+- [ ] After processing, `GET /api/v1/orders/{transactionId}` returns each item's `unitPrice` unchanged from what was submitted at creation — no recalculation (BR-3)
 - [ ] GET response contains no `cardNumber`, `cvv`, `holderName`, or `street` fields (CON-SEC-2, CON-SEC-7)
 - [ ] Error response body contains only a correlation ID and generic message — no stack trace (CON-SEC-3)
 - [ ] `OrderAuditLogs` table receives one append-only entry per state transition (CON-GOV-1, CON-GOV-6)
