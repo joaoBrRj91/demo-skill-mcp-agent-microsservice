@@ -1,45 +1,45 @@
 # Tasks — CreateOrderDomainBusiness
 
 ## Domain
-- [ ] Create `OrderId` strongly-typed ID — `sealed record(Guid Value)` with `New()` and `ToString()` (`Domain/Aggregates/Order/OrderId.cs`)
-- [ ] Create `OrderStatus` enumeration — `Processing`, `Processed`, `Error` (`Domain/Aggregates/Order/OrderStatus.cs`)
-- [ ] Create `PaymentMethod` enumeration — `CreditCard`, `Pix` (`Domain/Aggregates/Order/PaymentMethod.cs`)
-- [ ] Create `OrderItem` value object **class** — `CatalogProductId (Guid)`, `Quantity (int)`, `UnitPrice (decimal)` (`Domain/Aggregates/Order/OrderItem.cs`)
-- [ ] Create `PaymentDetails` value object **class** — `Method (PaymentMethod)`, `CardNumber (string?)`, `HolderName (string?)`, `Expiry (string?)`, `Cvv (string?)`, `PixKey (string?)` (`Domain/Aggregates/Order/PaymentDetails.cs`)
-- [ ] Create `ShippingAddress` value object **class** — `Street`, `City`, `State`, `ZipCode`, `Country` (all string) (`Domain/Aggregates/Order/ShippingAddress.cs`)
-- [ ] Create `Order` aggregate inheriting `AggregateRoot<OrderId>` (`Domain/Aggregates/Order/Order.cs`)
+- [x] Create `OrderId` strongly-typed ID — `sealed record(Guid Value)` with `New()` and `ToString()` (`Domain/Aggregates/Order/OrderId.cs`)
+- [x] Create `OrderStatus` enumeration — `Processing`, `Processed`, `Error` (`Domain/Aggregates/Order/OrderStatus.cs`)
+- [x] Create `PaymentMethod` enumeration — `CreditCard`, `Pix` (`Domain/Aggregates/Order/PaymentMethod.cs`)
+- [x] Create `OrderItem` value object **class** — `CatalogProductId (Guid)`, `Quantity (int)`, `UnitPrice (decimal)` (`Domain/Aggregates/Order/OrderItem.cs`)
+- [x] Create `PaymentDetails` value object **class** — `Method (PaymentMethod)`, `CardNumber (string?)`, `HolderName (string?)`, `Expiry (string?)`, `Cvv (string?)`, `PixKey (string?)` (`Domain/Aggregates/Order/PaymentDetails.cs`)
+- [x] Create `ShippingAddress` value object **class** — `Street`, `City`, `State`, `ZipCode`, `Country` (all string) (`Domain/Aggregates/Order/ShippingAddress.cs`)
+- [x] Create `Order` aggregate inheriting `AggregateRoot<OrderId>` (`Domain/Aggregates/Order/Order.cs`)
   - Properties: `UserId (Guid)`, `TransactionId (Guid)`, `Status (OrderStatus)`, `ErrorMessage (string?)`, `Items (IReadOnlyList<OrderItem>)`, `Payment (PaymentDetails)`, `Address (ShippingAddress)`, `CreatedAt (DateTime)`, `UpdatedAt (DateTime?)`, `DeletedAt (DateTime?)` (CON-GOV-2)
   - `private Order() {}` — EF Core parameterless ctor
   - `static Order Create(Guid transactionId, Guid userId, IReadOnlyList<OrderItem> items, PaymentDetails payment, ShippingAddress address)` — sets Status=Processing, raises `OrderCreatedEvent`; throws `OrderItemsEmptyException` if items is empty
   - `MarkAsProcessed()` — sets Status=Processed, sets UpdatedAt=UtcNow (CON-WF-5), raises `OrderProcessedEvent`; throws `InvalidOrderStatusTransitionException` if Status != Processing (CON-WF-3)
   - `MarkAsError(string message)` — sets Status=Error, sets ErrorMessage, sets UpdatedAt=UtcNow (CON-WF-5), raises `OrderErrorEvent`; throws `InvalidOrderStatusTransitionException` if Status != Processing (CON-WF-3)
-- [ ] Create `OrderAuditLog` entity — `OrderId (Guid)`, `TransactionId (Guid)`, `FromState (string)`, `ToState (string)`, `OccurredAtUtc (DateTime)`, `TriggeredByEvent (string)` (`Domain/Aggregates/Order/OrderAuditLog.cs`) — CON-GOV-1
-- [ ] Create domain events: `OrderCreatedEvent(OrderId OrderId)`, `OrderProcessedEvent(OrderId OrderId)`, `OrderErrorEvent(OrderId OrderId, string ErrorMessage)` (`Domain/Events/`)
-- [ ] Create domain exceptions: `OrderNotFoundException`, `OrderItemsEmptyException`, `InvalidOrderStatusTransitionException` (`Domain/Exceptions/`)
+- [x] Create `OrderAuditLog` entity — `OrderId (Guid)`, `TransactionId (Guid)`, `FromState (string)`, `ToState (string)`, `OccurredAtUtc (DateTime)`, `TriggeredByEvent (string)` (`Domain/Aggregates/Order/OrderAuditLog.cs`) — CON-GOV-1
+- [x] Create domain events: `OrderCreatedEvent(OrderId OrderId)`, `OrderProcessedEvent(OrderId OrderId)`, `OrderErrorEvent(OrderId OrderId, string ErrorMessage)` (`Domain/Events/`)
+- [x] Create domain exceptions: `OrderNotFoundException`, `OrderItemsEmptyException`, `InvalidOrderStatusTransitionException` (`Domain/Exceptions/`)
 
 ## Application
-- [ ] Define `IOrderRepository` port — `AddAsync(Order, ct)`, `GetByIdAsync(OrderId, ct) → Order?`, `GetByTransactionIdAsync(Guid, ct) → Order?`, `UpdateAsync(Order, ct)` (`Application/Ports/IOrderRepository.cs`)
-- [ ] Define `IAuditLogRepository` port — `AppendAsync(OrderAuditLog, ct)` (append-only; no update or delete) (`Application/Ports/IAuditLogRepository.cs`) — CON-GOV-1, CON-GOV-6
-- [ ] Define `IPaymentGateway` port with `PaymentRequest(Guid OrderId, decimal TotalAmount, PaymentDetails Payment)` and `PaymentResult(bool Success, string? ErrorMessage)` (`Application/Ports/IPaymentGateway.cs`)
-- [ ] Create `CreateOrderCommand` + handler + validator (`Application/Commands/CreateOrder/`)
+- [x] Define `IOrderRepository` port — `AddAsync(Order, ct)`, `GetByIdAsync(OrderId, ct) → Order?`, `GetByTransactionIdAsync(Guid, ct) → Order?`, `UpdateAsync(Order, ct)` (`Application/Ports/IOrderRepository.cs`)
+- [x] Define `IAuditLogRepository` port — `AppendAsync(OrderAuditLog, ct)` (append-only; no update or delete) (`Application/Ports/IAuditLogRepository.cs`) — CON-GOV-1, CON-GOV-6
+- [x] Define `IPaymentGateway` port with `PaymentRequest(Guid OrderId, decimal TotalAmount, PaymentDetails Payment)` and `PaymentResult(bool Success, string? ErrorMessage)` (`Application/Ports/IPaymentGateway.cs`)
+- [x] Create `CreateOrderCommand` + handler + validator (`Application/Commands/CreateOrder/`)
   - Command includes client-supplied `TransactionId (Guid)` as idempotency key (CON-IC-1)
   - Handler: if order with same TransactionId already exists, return its Id without re-creating (CON-IC-2)
   - Handler creates order, calls `repository.AddAsync`, publishes `OrderCreatedEvent` via `IPublishEndpoint`
   - Validator: all string fields — strip HTML tags, null bytes (`\0`), and control characters before passing to aggregate (CON-SEC-1); `TransactionId` NotEmpty; `UserId` NotEmpty; `Items` NotEmpty; each item: `CatalogProductId` NotEmpty, `Quantity ≥ 1`, `UnitPrice > 0`; `Payment.Method` is valid `PaymentMethod` enum; when CreditCard — `CardNumber` NotEmpty 13–19 chars, `HolderName` NotEmpty, `Expiry` matches `^(0[1-9]|1[0-2])\/\d{2}$`, `Cvv` matches `^\d{3,4}$`; when Pix — `PixKey` NotEmpty; all address fields NotEmpty
-- [ ] Create `ProcessOrderCommand` + handler (no validator — internal command) (`Application/Commands/ProcessOrder/`)
+- [x] Create `ProcessOrderCommand` + handler (no validator — internal command) (`Application/Commands/ProcessOrder/`)
   - Handler: load order; if already `Processed` or `Error`, return as no-op (CON-WF-6)
   - Handler: compute `totalAmount`, call `IPaymentGateway.ProcessAsync`, call `MarkAsProcessed()` or `MarkAsError()`, then `UpdateAsync`
   - Handler: write `OrderAuditLog` entry via `IAuditLogRepository` on every state transition (CON-GOV-1)
-- [ ] Create `GetOrderStatusQuery(Guid TransactionId)` + handler returning `OrderPollingDto?` (`Application/Queries/GetOrderStatus/`)
+- [x] Create `GetOrderStatusQuery(Guid TransactionId)` + handler returning `OrderPollingDto?` (`Application/Queries/GetOrderStatus/`)
   - Handler uses `GetByTransactionIdAsync`; returns null (→ 404) if not found
   - If Processing: map thin DTO (TransactionId + Status only, Order = null)
   - Otherwise: map full DTO including `OrderDto`
-- [ ] Create DTOs — no card numbers, CVV, or raw PII exposed (CON-SEC-2) (`Application/DTOs/`)
+- [x] Create DTOs — no card numbers, CVV, or raw PII exposed (CON-SEC-2) (`Application/DTOs/`)
   - `OrderPollingDto` — `TransactionId (Guid)`, `Status (string)`, `ErrorMessage (string?)`, `Order (OrderDto?)`
   - `OrderDto` — `Id (Guid)`, `UserId (Guid)`, `Items (IReadOnlyList<OrderItemDto>)`, `PaymentMethod (string)`, `Address (ShippingAddressDto)`, `CreatedAt (DateTime)`, `UpdatedAt (DateTime?)`
   - `OrderItemDto` — `CatalogProductId (Guid)`, `Quantity (int)`, `UnitPrice (decimal)`
   - `ShippingAddressDto` — `City`, `State`, `ZipCode`, `Country` (Street omitted per CON-SEC-7 masking rules)
-- [ ] Create `OrderMappingProfile` — apply per-field masking rules (CON-SEC-7): omit Street from address, omit card data, map Status to string (`Application/Mappings/OrderMappingProfile.cs`)
+- [x] Create `OrderMappingProfile` — apply per-field masking rules (CON-SEC-7): omit Street from address, omit card data, map Status to string (`Application/Mappings/OrderMappingProfile.cs`)
 
 ## Infrastructure.Data
 - [ ] Create `OrderConfiguration` EF config (`Infrastructure.Data/Configurations/OrderConfiguration.cs`)
