@@ -42,7 +42,7 @@
 - [x] Create `OrderMappingProfile` — apply per-field masking rules (CON-SEC-7): omit Street from address, omit card data, map Status to string (`Application/Mappings/OrderMappingProfile.cs`)
 
 ## Infrastructure.Data
-- [ ] Create `OrderConfiguration` EF config (`Infrastructure.Data/Configurations/OrderConfiguration.cs`)
+- [x] Create `OrderConfiguration` EF config (`Infrastructure.Data/Configurations/OrderConfiguration.cs`)
   - `entity.Ignore(e => e.DomainEvents)`
   - `entity.Property(e => e.Status).HasConversion<string>()`
   - `entity.OwnsMany(e => e.Items, b => { b.ToTable("OrderItems"); ... })`
@@ -51,28 +51,28 @@
   - Unique index on `TransactionId` column (CON-IC-3)
   - `entity.Property<byte[]>("RowVersion").IsRowVersion()` — optimistic concurrency guard (CON-IC-3)
   - `DeletedAt` nullable column (CON-GOV-2 soft-delete)
-- [ ] Create `AuditLogConfiguration` EF config — maps `OrderAuditLog` to `OrderAuditLogs` table; no soft-delete (CON-GOV-6) (`Infrastructure.Data/Configurations/AuditLogConfiguration.cs`)
-- [ ] Create `OrderRepository` implementing `IOrderRepository` (`Infrastructure.Data/Repositories/OrderRepository.cs`)
-- [ ] Create `AuditLogRepository` implementing `IAuditLogRepository` — `AppendAsync` only; never updates or deletes entries (`Infrastructure.Data/Repositories/AuditLogRepository.cs`) — CON-GOV-6
-- [ ] Add `DbSet<Order> Orders { get; set; }` and `DbSet<OrderAuditLog> OrderAuditLogs { get; set; }` to `AppDbContext`
+- [x] Create `AuditLogConfiguration` EF config — maps `OrderAuditLog` to `OrderAuditLogs` table; no soft-delete (CON-GOV-6) (`Infrastructure.Data/Configurations/AuditLogConfiguration.cs`)
+- [x] Create `OrderRepository` implementing `IOrderRepository` (`Infrastructure.Data/Repositories/OrderRepository.cs`)
+- [x] Create `AuditLogRepository` implementing `IAuditLogRepository` — `AppendAsync` only; never updates or deletes entries (`Infrastructure.Data/Repositories/AuditLogRepository.cs`) — CON-GOV-6
+- [x] Add `DbSet<Order> Orders { get; set; }` and `DbSet<OrderAuditLog> OrderAuditLogs { get; set; }` to `AppDbContext`
 - [ ] Run EF migration: `dotnet ef migrations add AddOrder --project src/Infrastructure.Data --startup-project src/Presentation`
 
 ## Infrastructure.Integration
-- [ ] Create `MockPaymentGateway` implementing `IPaymentGateway` — returns `PaymentResult(Success: true, ErrorMessage: null)` by default; no external dependency; drop-in replaceable without touching other layers (`Infrastructure.Integration/PaymentGateway/MockPaymentGateway.cs`)
-- [ ] Create `OrderCreatedConsumer : IConsumer<OrderCreatedEvent>` — inject `ISender` and `ILogger`; on Consume dispatch `ProcessOrderCommand(context.Message.OrderId.Value)` via MediatR; MassTransit's outbox or deduplication ensures CON-IC-4 idempotency (`Infrastructure.Integration/Messaging/Consumers/OrderCreatedConsumer.cs`)
+- [x] Create `MockPaymentGateway` implementing `IPaymentGateway` — returns `PaymentResult(Success: true, ErrorMessage: null)` by default; no external dependency; drop-in replaceable without touching other layers (`Infrastructure.Integration/PaymentGateway/MockPaymentGateway.cs`)
+- [x] Create `OrderCreatedConsumer : IConsumer<OrderCreatedEvent>` — inject `ISender` and `ILogger`; on Consume dispatch `ProcessOrderCommand(context.Message.OrderId.Value)` via MediatR; MassTransit's outbox or deduplication ensures CON-IC-4 idempotency (`Infrastructure.Integration/Messaging/Consumers/OrderCreatedConsumer.cs`)
 
 ## Presentation
-- [ ] Create `OrderEndpoints` static class with `MapOrderEndpoints(this IEndpointRouteBuilder app)` extension method (`Presentation/Endpoints/OrderEndpoints.cs`)
+- [x] Create `OrderEndpoints` static class with `MapOrderEndpoints(this IEndpointRouteBuilder app)` extension method (`Presentation/Endpoints/OrderEndpoints.cs`)
   - `POST /api/v1/orders` → HTTP 202 Accepted with `{ transactionId, status }` (CON-API-1, CON-API-2)
   - `GET /api/v1/orders/{transactionId:guid}` → HTTP 200 with `OrderPollingDto` or HTTP 404 (CON-API-3, CON-API-6)
-- [ ] Add global exception handler middleware in `Program.cs` — never expose stack traces or raw DB errors in responses; return only a correlation ID + generic message (CON-SEC-3)
-- [ ] Add security headers to Order endpoints: `X-Content-Type-Options: nosniff`, `Cache-Control: no-store, no-cache`, `Strict-Transport-Security: max-age=31536000; includeSubDomains` (CON-SEC-4)
-- [ ] Register DI in `Program.cs`:
+- [x] Add global exception handler middleware in `Program.cs` — never expose stack traces or raw DB errors in responses; return only a correlation ID + generic message (CON-SEC-3)
+- [x] Add security headers to Order endpoints: `X-Content-Type-Options: nosniff`, `Cache-Control: no-store, no-cache`, `Strict-Transport-Security: max-age=31536000; includeSubDomains` (CON-SEC-4)
+- [x] Register DI in `Program.cs`:
   - `builder.Services.AddScoped<IOrderRepository, OrderRepository>()`
   - `builder.Services.AddScoped<IPaymentGateway, MockPaymentGateway>()`
   - `builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>()`
-- [ ] Register `OrderCreatedConsumer` in MassTransit configuration in `Program.cs`
-- [ ] Call `app.MapOrderEndpoints()` in `Program.cs`
+- [x] Register `OrderCreatedConsumer` in MassTransit configuration in `Program.cs`
+- [x] Call `app.MapOrderEndpoints()` in `Program.cs`
 
 ## Verification
 - [ ] `dotnet build` — zero errors

@@ -7,6 +7,7 @@ using JL.Commerce.Tecnology.Service.Application.Ports;
 using JL.Commerce.Tecnology.Service.Infrastructure.Data.Context;
 using JL.Commerce.Tecnology.Service.Infrastructure.Data.Repositories;
 using JL.Commerce.Tecnology.Service.Infrastructure.Integration.Messaging.Consumers;
+using JL.Commerce.Tecnology.Service.Infrastructure.Integration.PaymentGateway;
 using JL.Commerce.Tecnology.Service.Presentation.Endpoints;
 using MassTransit;
 using MediatR;
@@ -59,6 +60,9 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
 builder.Services.AddScoped<IEntityRepository, EntityRepository>();
 builder.Services.AddScoped<ICatalogProductRepository, CatalogProductRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>();
+builder.Services.AddScoped<IPaymentGateway, MockPaymentGateway>();
 
 // ── In-Memory Cache ───────────────────────────────────────────────────────────
 builder.Services.AddMemoryCache();
@@ -69,6 +73,7 @@ builder.Services.AddMassTransit(x =>
     x.AddConsumer<EntityCreatedConsumer>();
     x.AddConsumer<CatalogProductCreatedConsumer>();
     x.AddConsumer<UserCreatedConsumer>();
+    x.AddConsumer<OrderCreatedConsumer>();
     x.UsingInMemory((ctx, cfg) => cfg.ConfigureEndpoints(ctx));
 });
 
@@ -83,6 +88,19 @@ builder.Services.AddAuthentication()
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+
+// ── Global exception handler ──────────────────────────────────────────────────
+app.UseExceptionHandler(errApp => errApp.Run(async ctx =>
+{
+    ctx.Response.StatusCode = StatusCodes.Status500InternalServerError;
+    ctx.Response.ContentType = "application/json";
+    var correlationId = ctx.TraceIdentifier;
+    await ctx.Response.WriteAsJsonAsync(new
+    {
+        correlationId,
+        message = "An unexpected error occurred. Please try again later."
+    });
+}));
 
 // ── OpenAPI JSON endpoint ─────────────────────────────────────────────────────
 app.MapOpenApi();                         // → GET /openapi/v1.json
@@ -113,5 +131,6 @@ app.UseAuthorization();
 app.MapEntityEndpoints();
 app.MapCatalogProductEndpoints();
 app.MapUserEndpoints();
+app.MapOrderEndpoints();
 
 app.Run();
