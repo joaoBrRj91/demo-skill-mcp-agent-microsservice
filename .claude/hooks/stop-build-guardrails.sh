@@ -3,7 +3,7 @@ BUILD_RC=0
 
 if [ -f /tmp/jl_cs_modified ]; then
   rm /tmp/jl_cs_modified
-  BUILD_OUT=$(cd "/c/Users/joaon/Projetos/IA/Study Projects/demo-skill-mcp-server-net-core/JL.Commerce.Tecnology.Service" \
+  BUILD_OUT=$(cd "$CLAUDE_PROJECT_DIR/JL.Commerce.Tecnology.Service" \
     && dotnet build --no-restore -v q 2>&1)
   BUILD_RC=$?
   echo "$BUILD_OUT" | tail -15
