@@ -23,10 +23,12 @@ non-negotiable:
 Stages are determined automatically from checkbox state across sessions. The skill
 resumes exactly where the previous session left off.
 
-## Hardcoded project constants (do not ask the user for these)
+## Derived project constants (do not ask the user for these)
 
-- Service root: `C:\Users\joaon\Projetos\IA\Study Projects\demo-skill-mcp-server-net-core\JL.Commerce.Tecnology.Service`
-- Spec root: `C:\Users\joaon\Projetos\IA\Study Projects\demo-skill-mcp-server-net-core\specs`
+Resolve both roots from the repository root — the working directory Claude Code is running in:
+
+- Service root: `{repo-root}/JL.Commerce.Tecnology.Service`
+- Spec root: `{repo-root}/specs`
 - Build command: `dotnet build --no-restore -v q`
 - Test command: `dotnet test --no-build -v q`
 
@@ -83,6 +85,7 @@ hasUncheckedTests  = Tests.md has any unchecked "- [ ]" task in any "## Stage 2"
 hasUncheckedTasks  = Tasks.md has any unchecked "- [ ]" implementation task
                      (excluding EF migration, dotnet ef, dotnet build, dotnet test lines)
 hasUncheckedVerify = Tests.md has unchecked "- [ ]" task in "## Stage 4" section
+allTasksComplete   = (hasUncheckedTasks = false)
 
 currentStage =
   if hasUncheckedSetup  → SETUP
@@ -92,9 +95,22 @@ currentStage =
   else                  → ALL_DONE
 ```
 
+> **Note:** Tests.md contains Stage 1, Stage 2, and Stage 4 sections.
+> Stage 3 (GREEN) has no corresponding section in Tests.md — it is tracked
+> entirely via Tasks.md checkbox state. The Stage 2 → Stage 4 jump in Tests.md
+> is intentional.
+>
+> **CATCH-UP scenario:** When `currentStage = RED` and `allTasksComplete = true`,
+> all production code is already implemented and only tests are missing.
+> See the RED→GREEN transition in Steps 3 and 5 for how this changes the build behavior.
+
 Print the current stage at session start:
 ```
 TDD for {FeatureName} — resuming at Stage: {SETUP | RED | GREEN | VERIFY}
+```
+If `currentStage = RED` and `allTasksComplete = true`, append:
+```
+(CATCH-UP: production code already implemented — tests will be written against existing types, then VERIFY)
 ```
 
 ---
@@ -113,14 +129,25 @@ If no unchecked Setup task remains → advance to RED (re-enter Step 3 with `cur
 
 Scan all `## Stage 2 —` sections in Tests.md top-to-bottom for the first unchecked `- [ ]` task.
 
-If no unchecked Stage 2 task remains → **RED→GREEN transition**:
+If no unchecked Stage 2 task remains → **RED→GREEN (or RED→VERIFY) transition**:
+
+**IF `allTasksComplete = false`** (normal TDD — production code not yet written):
 1. Run one build to document the RED state:
    ```bash
    dotnet build --no-restore -v q
    ```
    Label the output `=== RED STATE (expected — production types not yet implemented) ===`.
-   Do **not** abort on failure — these errors are expected.
+   Do **not** abort on failure — compilation errors are expected.
 2. Set `currentStage = GREEN` and re-enter Step 3.
+
+**IF `allTasksComplete = true`** (CATCH-UP — production code already exists):
+1. Run one build to verify the existing implementation compiles cleanly with the new tests:
+   ```bash
+   dotnet build --no-restore -v q
+   ```
+   Label the output `=== CATCH-UP COMPLETE (tests written for existing implementation — build expected to pass) ===`.
+   If build **fails**: stop and report the error — failure is **not** expected here.
+2. Set `currentStage = VERIFY` and re-enter Step 3 (skip GREEN — nothing to implement).
 
 ### GREEN stage
 
@@ -285,12 +312,21 @@ If a `.csproj` creation task fails the build after 2 fix rounds, stop and report
 ### RED
 No per-test build. Skip directly to Step 6.
 
-When ALL Stage 2 tasks are checked off (transition to GREEN):
+When ALL Stage 2 tasks are checked off:
+
+**If `allTasksComplete = false`** (normal TDD):
 ```bash
 dotnet build --no-restore -v q
 ```
 Print output prefixed with `=== RED STATE (expected — production types not yet implemented) ===`.
 Do NOT abort on failure. Immediately proceed to GREEN stage.
+
+**If `allTasksComplete = true`** (CATCH-UP):
+```bash
+dotnet build --no-restore -v q
+```
+Print output prefixed with `=== CATCH-UP COMPLETE (tests written for existing implementation — build expected to pass) ===`.
+If build fails, stop and report — failure is not expected. If build passes, proceed to VERIFY stage.
 
 ### GREEN
 Run from the service root:
