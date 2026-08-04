@@ -7,6 +7,9 @@ description: >
   this feature", "spec-driven", or wants to document a feature before implementing it.
   Also trigger when the user says "I have a spec" or "I wrote the spec, now what?".
   Requires an existing, non-empty Spec.md in the target folder.
+  Accepts an optional `use_context7=true` argument (set programmatically by the
+  sdd-spec-create agent) to enrich Tasks.md task descriptions with current .NET library
+  API signatures retrieved from context7 MCP. Do not set this argument manually.
 ---
 
 # sdd-spec — Spec-Driven Development Document Generator
@@ -24,13 +27,24 @@ Skip any file that already exists — warn the user and continue to the next.
 
 ---
 
+## Step 0 — Parse arguments
+
+Before doing anything else, parse the raw argument string passed to this skill:
+
+- **`SPEC_PATH`** — everything in the arg string that precedes the token `use_context7`, trimmed of whitespace. If no `use_context7` token is present, the entire arg string is `SPEC_PATH`.
+- **`USE_CONTEXT7`** — `true` if and only if the arg string contains the exact token `use_context7=true`; otherwise `false`.
+
+Carry `SPEC_PATH` forward as the effective path argument for Step 1, and `USE_CONTEXT7` as a boolean flag for Step 5.
+
+---
+
 ## Step 1 — Locate the spec folder
 
-**If a path was passed** as an argument (e.g. `/sdd-spec specs/JL.Commerce.Tecnology.Service/Features/ProcessRefund`):
+**If a path was passed** as `SPEC_PATH` (e.g. `/sdd-spec specs/JL.Commerce.Tecnology.Service/Features/ProcessRefund`):
 
 - Resolve it to an absolute path and use it as the spec folder.
 
-**If no path was given**, ask:
+**If `SPEC_PATH` is empty**, ask:
 
 > "Which feature are you speccing? Tell me:
 >
@@ -149,7 +163,7 @@ verbatim; Plan.md translates business intent into engineering decisions.
 
 ### AppDbContext
 
-Add `DbSet<{Name}> {PluralName} {{ get; set; }}` to AppDbContext.cs
+Add `DbSet<{Name}> {PluralName} { get; set; }` to AppDbContext.cs
 
 ### EF Migration
 ```
@@ -327,6 +341,24 @@ Read `Spec.md` + `Plan.md` + `Constitution.md`. Produce a checkbox list of every
 concrete implementation task, ordered by dependency (Domain first, Presentation last).
 Each task maps to one file or one edit from Plan.md's file checklist, plus any
 Constitution-mandated additions not in the plan.
+
+**If `USE_CONTEXT7=true` — enrich task descriptions before writing:**
+
+After reading all three source documents but before writing Tasks.md, identify the .NET
+libraries this feature uses from Plan.md (look for MediatR handlers, FluentValidation
+validators, AutoMapper profiles, MassTransit consumers). For each identified library
+(up to 4):
+
+1. Call `mcp__context7__resolve-library-id` with the library display name
+   (e.g., `"MediatR"`, `"FluentValidation"`, `"AutoMapper"`, `"MassTransit"`).
+2. Call `mcp__context7__query-docs` with the resolved library ID and a targeted query
+   (e.g., `"IRequestHandler implementation"`, `"AbstractValidator RuleFor"`).
+3. Use the retrieved current API signatures in task text where they are referenced —
+   e.g., a handler task cites the exact `IRequestHandler<TRequest, TResponse>` signature
+   from docs rather than from training memory.
+
+This enrichment does not change which tasks are generated, their order, or their
+CON-* references — it only improves the accuracy of task descriptions.
 
 **Structure to follow:**
 

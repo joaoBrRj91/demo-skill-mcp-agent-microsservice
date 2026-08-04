@@ -25,14 +25,14 @@
       "Bash(echo \"EXIT:$?\")",
       "mcp__plugin_semgrep_semgrep__semgrep_scan",
       "Bash(semgrep scan:*)",
-      "Bash(ls /tmp/jl_guardrails_review_pending*)",
-      "Bash(rm /tmp/jl_guardrails_review_pending)",
+      "Bash(ls \"$CLAUDE_PROJECT_DIR/.claude/tmp/jl_guardrails_review_pending\"*)",
+      "Bash(rm \"$CLAUDE_PROJECT_DIR/.claude/tmp/jl_guardrails_review_pending\")",
       "Bash(mkdir -p .claude/agents/reports)",
       "Bash(find 'C:\\Users\\joaon\\Projetos\\IA\\Study Projects\\demo-skill-mcp-server-net-core/JL.Commerce.Tecnology.Service/src/Presentation' -type f -name *.cs ! -path */obj/* ! -path */bin/*)",
       "Bash(find 'C:\\Users\\joaon\\Projetos\\IA\\Study Projects\\demo-skill-mcp-server-net-core/JL.Commerce.Tecnology.Service/src/' -maxdepth 3 -type d ! -path */obj/* ! -path */bin/*)",
       "Bash(find \"C:\\Users\\joaon\\Projetos\\IA\\Study Projects\\demo-skill-mcp-server-net-core/JL.Commerce.Tecnology.Service\\src\" -type f -name \"*Entity*\")",
       "Bash(find 'C:\\Users\\joaon\\Projetos\\IA\\Study Projects\\demo-skill-mcp-server-net-core/JL.Commerce.Tecnology.Service/src/Domain/Abstractions' -type f -name *.cs)",
-      "Read(/tmp/**)",
+      "Read(//c/Users/joaon/Projetos/IA/Study Projects/demo-skill-mcp-server-net-core/.claude/tmp/**)",
       "Read(//c/Users/joaon/Projetos/IA/Study Projects/demo-skill-mcp-server-net-core/**)",
       "Bash(python3:*)",
       "Bash(echo \"exit: $?\")",
@@ -42,45 +42,5 @@
   },
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": ["context7", "ddd-scaffold"],
-  "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/post-edit-write-cs-modified.sh\""
-          }
-        ]
-      },
-      {
-        "matcher": "mcp__ddd-scaffold__scaffold_aggregate|mcp__ddd-scaffold__scaffold_command|mcp__ddd-scaffold__scaffold_query",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/post-ddd-scaffold-cs-modified.sh\""
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/post-bash-git-commit.sh\""
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/stop-build-guardrails.sh\""
-          }
-        ]
-      }
-    ]
-  }
+  "hooks": {}
 }
