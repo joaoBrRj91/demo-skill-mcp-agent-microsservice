@@ -5,7 +5,7 @@ description: >
   information from the user (via structured questions or natural-language input),
   generates a draft Spec.md, validates it with spec-reviewer, and — after user
   confirmation — delegates to sdd-spec-create to produce Plan.md, Constitution.md,
-  and Tasks.md. Maintains resumable state in
+  Tests.md, and Tasks.md. Maintains resumable state in
   .claude/agents/memories/sdd-spec-init-orchestrator-state.md so an interrupted flow
   can be resumed in a new session. Invoke with phrases like: "create a new spec",
   "start the SDD workflow", "I want to spec a new feature", "run sdd-spec-init",
@@ -16,8 +16,7 @@ color: green
 # sdd-spec-init-orchestrator — Interactive SDD Spec Creation Orchestrator
 
 You guide the user from a feature idea to a validated `Spec.md`, then delegate document
-generation to `sdd-spec-create`. You do not generate Plan.md, Constitution.md, or Tasks.md
-yourself.
+generation to `sdd-spec-create`. You do not generate Plan.md, Constitution.md, Tests.md, or Tasks.md yourself.
 
 ---
 

@@ -2,7 +2,7 @@
 name: sdd-spec
 description: >
   Runs the spec-driven development (SDD) process to generate Plan.md, Constitution.md,
-  and Tasks.md from an existing Spec.md. Use this skill whenever the user mentions
+  Tests.md, and Tasks.md from an existing Spec.md. Use this skill whenever the user mentions
   "SDD", "spec documents", "generate the plan", "create the constitution", "run SDD for
   this feature", "spec-driven", or wants to document a feature before implementing it.
   Also trigger when the user says "I have a spec" or "I wrote the spec, now what?".
@@ -14,16 +14,21 @@ description: >
 
 # sdd-spec — Spec-Driven Development Document Generator
 
-Generates three documents in mandatory sequence from an existing `Spec.md`. Each document
+Generates four documents in mandatory sequence from an existing `Spec.md`. Each document
 uses all preceding ones as context, so the order is non-negotiable:
 
-| Order | File              | Context used                              |
-| ----- | ----------------- | ----------------------------------------- |
-| 1     | `Plan.md`         | `Spec.md`                                 |
-| 2     | `Constitution.md` | `Spec.md` + `Plan.md`                     |
-| 3     | `Tasks.md`        | `Spec.md` + `Plan.md` + `Constitution.md` |
+| Order | File              | Context used                                             |
+| ----- | ----------------- | -------------------------------------------------------- |
+| 1     | `Plan.md`         | `Spec.md`                                                |
+| 2     | `Constitution.md` | `Spec.md` + `Plan.md`                                    |
+| 3     | `Tests.md`        | `Spec.md` + `Plan.md` + `Constitution.md`                |
+| 4     | `Tasks.md`        | `Spec.md` + `Plan.md` + `Constitution.md` + `Tests.md`   |
 
-Skip any file that already exists — warn the user and continue to the next.
+Tests.md comes before Tasks.md so that test specifications exist before implementation
+tasks are written. This enforces the TDD contract: test code is always written before
+production code.
+
+Skip any file that already exists and is non-empty — warn the user and continue to the next.
 
 ---
 
@@ -34,7 +39,7 @@ Before doing anything else, parse the raw argument string passed to this skill:
 - **`SPEC_PATH`** — everything in the arg string that precedes the token `use_context7`, trimmed of whitespace. If no `use_context7` token is present, the entire arg string is `SPEC_PATH`.
 - **`USE_CONTEXT7`** — `true` if and only if the arg string contains the exact token `use_context7=true`; otherwise `false`.
 
-Carry `SPEC_PATH` forward as the effective path argument for Step 1, and `USE_CONTEXT7` as a boolean flag for Step 5.
+Carry `SPEC_PATH` forward as the effective path argument for Step 1, and `USE_CONTEXT7` as a boolean flag for Step 6.
 
 ---
 
@@ -335,16 +340,101 @@ Trace each rule to its Spec.md business rule (e.g., "Source: BR-1").
 
 ---
 
-## Step 5 — Generate Tasks.md
+## Step 5 — Generate Tests.md
 
-Read `Spec.md` + `Plan.md` + `Constitution.md`. Produce a checkbox list of every
+Read `Spec.md` + `Plan.md` + `Constitution.md`. Produce a TDD test specification
+organized as a checkbox task list. Each item maps to one test class file. Each item
+specifies the individual `[Fact]` method names, what they assert, and which BR-N /
+CON-* IDs they trace back to.
+
+Skip if Tests.md already exists and is non-empty.
+
+Before writing, check whether the test project `.csproj` files already exist:
+- `tests/UnitTests/JL.Commerce.Tecnology.Service.UnitTests.csproj`
+- `tests/IntegrationTests/JL.Commerce.Tecnology.Service.IntegrationTests.csproj`
+
+Include the `## Stage 1 — Setup` section only for projects that do **not** yet exist.
+
+**Structure to follow:**
+
+```markdown
+# Tests — {FeatureName}
+
+> TDD: implement ALL items in this file before opening Tasks.md.
+> Stage 1 → Setup | Stage 2 → Write test files (RED) | Stage 3 → implement Tasks.md (GREEN) | Stage 4 → dotnet test
+
+## Stage 1 — Setup (skip tasks whose .csproj already exists on disk)
+
+- [ ] Create unit test project (`tests/UnitTests/JL.Commerce.Tecnology.Service.UnitTests.csproj`)
+  - Target: net10.0; packages: xunit, xunit.runner.visualstudio, Microsoft.NET.Test.Sdk, Moq, coverlet.collector
+  - Project references: Domain, Application
+- [ ] Create integration test project (`tests/IntegrationTests/JL.Commerce.Tecnology.Service.IntegrationTests.csproj`)
+  - Target: net10.0; same packages + Microsoft.AspNetCore.Mvc.Testing
+  - Project reference: Presentation
+- [ ] Add both projects to the solution file
+
+## Stage 2 — Unit Tests: Domain Layer
+
+- [ ] [TR-1] `{Name}Id` value object (`tests/UnitTests/Domain/Aggregates/{Name}/{Name}IdTests.cs`)
+  - `New_Returns_Valid_NonEmpty_Guid` — Value is not Guid.Empty
+  - `Two_New_Calls_Produce_Unique_Ids` — consecutive calls differ
+  - `ToString_Returns_Guid_String` — matches Value.ToString()
+
+- [ ] [TR-2] `{Name}` aggregate (`tests/UnitTests/Domain/Aggregates/{Name}/{Name}Tests.cs`)
+  - One `[Fact]` per test scenario from Spec.md — method name encodes the scenario
+  - Each method includes `// [BR-N] [CON-*]` traceability on the assertion line
+  - …
+
+## Stage 2 — Unit Tests: Application Layer
+
+- [ ] [TR-N] `{Verb}{Name}CommandHandler` (`tests/UnitTests/Application/Commands/{Verb}{Name}CommandHandlerTests.cs`)
+  - Constructor sets up Moq mocks for all port interfaces (IRepository, IEventBus, etc.)
+  - One `[Fact]` per handler behaviour described in Plan.md
+  - …
+
+- [ ] [TR-N] `{Verb}{Name}CommandValidator` (`tests/UnitTests/Application/Commands/{Verb}{Name}CommandValidatorTests.cs`)
+  - One `[Fact]` per FluentValidation rule from Constitution.md
+  - …
+
+- [ ] [TR-N] `Get{Name}...QueryHandler` (`tests/UnitTests/Application/Queries/…Tests.cs`)
+  - …
+
+## Stage 2 — Integration Tests
+
+- [ ] [TR-N] `{Name}Endpoints` integration tests (`tests/IntegrationTests/Endpoints/{Name}EndpointsTests.cs`)
+  - Uses `WebApplicationFactory<Program>`
+  - One `[Fact]` per API contract invariant from Constitution.md Article VI
+  - …
+
+## Stage 4 — Verification
+
+- [ ] `dotnet test` — zero failures
+```
+
+**Rules when writing Tests.md:**
+- Every test scenario from Spec.md must map to at least one `[Fact]`.
+- Every CON-* constraint must be traceable to at least one test.
+- Omit Integration Tests section if the feature adds no API-facing endpoints.
+- TR-N IDs are sequential across the whole document.
+
+---
+
+## Step 6 — Generate Tasks.md
+
+Read `Spec.md` + `Plan.md` + `Constitution.md` + `Tests.md`. Produce a checkbox list of every
 concrete implementation task, ordered by dependency (Domain first, Presentation last).
 Each task maps to one file or one edit from Plan.md's file checklist, plus any
 Constitution-mandated additions not in the plan.
 
+Add the following reminder at the top of the generated Tasks.md, directly after the `# Tasks` heading:
+
+```markdown
+> TDD: all Tests.md tasks (Stages 1–2) MUST be complete before implementing any task below.
+```
+
 **If `USE_CONTEXT7=true` — enrich task descriptions before writing:**
 
-After reading all three source documents but before writing Tasks.md, identify the .NET
+After reading all four source documents but before writing Tasks.md, identify the .NET
 libraries this feature uses from Plan.md (look for MediatR handlers, FluentValidation
 validators, AutoMapper profiles, MassTransit consumers). For each identified library
 (up to 4):
@@ -424,7 +514,9 @@ SDD complete for {FeatureName}:
 
   Plan.md         — ✓ created  (or ⚠ skipped, already exists and not empty)
   Constitution.md — ✓ created  (or ⚠ skipped, already exists and not empty)
+  Tests.md        — ✓ created  ({N} test cases across {M} test classes)  (or ⚠ skipped)
   Tasks.md        — ✓ created  (or ⚠ skipped, already exists and not empty)
 
-Next: review each document, then start implementation following Tasks.md order.
+TDD order enforced by /sdd-next-task:
+  Stage 1: Setup → Stage 2: Write tests (RED) → Stage 3: Implement Tasks.md (GREEN) → Stage 4: dotnet test
 ```
