@@ -8,30 +8,32 @@ public sealed class OrderMappingProfile : Profile
 {
     public OrderMappingProfile()
     {
-        CreateMap<Order, OrderPollingDto>()
-            .ForMember(d => d.TransactionId, o => o.MapFrom(s => s.TransactionId))
-            .ForMember(d => d.Status, o => o.MapFrom(s => s.Status.ToString()))
-            .ForMember(d => d.ErrorMessage, o => o.MapFrom(s => s.ErrorMessage))
-            .ForMember(d => d.Order, o => o.MapFrom(s => s));
+        // Simple value-object maps: all ctor param names match source property names exactly.
+        CreateMap<ShippingAddress, ShippingAddressDto>();
+        CreateMap<OrderItem, OrderItemDto>();
 
+        // Order → OrderDto:
+        //   ForCtorParam — resolves constructor parameters where source type differs from target type.
+        //   ForMember    — resolves init-only property setters (AutoMapper 16 second pass for records).
+        //   Both are required because AutoMapper 16 runs constructor resolution and property resolution
+        //   as separate passes and does not share ForMember config with ForCtorParam (or vice-versa).
         CreateMap<Order, OrderDto>()
-            .ForMember(d => d.Id, o => o.MapFrom(s => s.Id.Value))
-            .ForMember(d => d.UserId, o => o.MapFrom(s => s.UserId))
-            .ForMember(d => d.Items, o => o.MapFrom(s => s.Items))
-            .ForMember(d => d.PaymentMethod, o => o.MapFrom(s => s.Payment.Method.ToString()))
-            .ForMember(d => d.Address, o => o.MapFrom(s => s.Address))
-            .ForMember(d => d.CreatedAt, o => o.MapFrom(s => s.CreatedAt))
-            .ForMember(d => d.UpdatedAt, o => o.MapFrom(s => s.UpdatedAt));
+            .ForCtorParam("id", opt => opt.MapFrom(s => s.Id.Value))
+            .ForCtorParam("paymentMethod", opt => opt.MapFrom(s => s.Payment.Method.ToString()))
+            .ForMember(d => d.Id, opt => opt.MapFrom(s => s.Id.Value))
+            .ForMember(d => d.PaymentMethod, opt => opt.MapFrom(s => s.Payment.Method.ToString()));
 
-        CreateMap<OrderItem, OrderItemDto>()
-            .ForMember(d => d.CatalogProductId, o => o.MapFrom(s => s.CatalogProductId))
-            .ForMember(d => d.Quantity, o => o.MapFrom(s => s.Quantity))
-            .ForMember(d => d.UnitPrice, o => o.MapFrom(s => s.UnitPrice));
-
-        CreateMap<ShippingAddress, ShippingAddressDto>()
-            .ForMember(d => d.City, o => o.MapFrom(s => s.City))
-            .ForMember(d => d.State, o => o.MapFrom(s => s.State))
-            .ForMember(d => d.ZipCode, o => o.MapFrom(s => s.ZipCode))
-            .ForMember(d => d.Country, o => o.MapFrom(s => s.Country));
+        // Order → OrderPollingDto:
+        //   ConstructUsing handles the conditional Order sub-object (null when Processing).
+        //   ForMember(Status) prevents enum→string convention failure in the second pass.
+        //   ForMember(Order, Ignore) prevents AutoMapper from overwriting the value set in ConstructUsing.
+        CreateMap<Order, OrderPollingDto>()
+            .ConstructUsing((s, ctx) => new OrderPollingDto(
+                s.TransactionId,
+                s.Status.ToString(),
+                s.ErrorMessage,
+                s.Status != OrderStatus.Processing ? ctx.Mapper.Map<OrderDto>(s) : null))
+            .ForMember(d => d.Status, opt => opt.MapFrom(s => s.Status.ToString()))
+            .ForMember(d => d.Order, opt => opt.Ignore());
     }
 }

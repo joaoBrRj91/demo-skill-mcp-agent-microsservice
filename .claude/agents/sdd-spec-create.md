@@ -1,13 +1,14 @@
 ---
 name: sdd-spec-create
 description: >
-  Generates Plan.md, Constitution.md, and Tasks.md for a feature by invoking the
-  sdd-spec skill with context7 enrichment enabled (use_context7=true). Returns a
-  summary report containing the total business rule count from Spec.md and the total
-  implementation task count from Tasks.md. Designed to be called by
-  sdd-spec-init-orchestrator after user confirmation. Can also be invoked directly
-  with phrases like: "run sdd-spec-create for {FeatureName}", "generate spec documents
-  with context7 for {FeatureName}", or "create Plan/Constitution/Tasks for {FeatureName}".
+  Generates Plan.md, Constitution.md, Tests.md, and Tasks.md for a feature by invoking
+  the sdd-spec skill with context7 enrichment enabled (use_context7=true). Returns a
+  summary report containing the total business rule count from Spec.md, the total test
+  case count from Tests.md, and the total implementation task count from Tasks.md.
+  Designed to be called by sdd-spec-init-orchestrator after user confirmation. Can also
+  be invoked directly with phrases like: "run sdd-spec-create for {FeatureName}",
+  "generate spec documents with context7 for {FeatureName}", or
+  "create Plan/Constitution/Tests/Tasks for {FeatureName}".
 color: cyan
 ---
 
@@ -59,12 +60,18 @@ as the argument string:
 /sdd-spec {SPEC_FOLDER} use_context7=true
 ```
 
-Wait for the skill to complete. It will write Plan.md, Constitution.md, and Tasks.md
-(skipping any that already exist). Capture whether each file was created or skipped.
+Wait for the skill to complete. It will write Plan.md, Constitution.md, Tests.md, and
+Tasks.md (skipping any that already exist). Capture whether each file was created or skipped.
 
 ---
 
-## Step 4 — Count implementation tasks
+## Step 4 — Count test cases and implementation tasks
+
+Read `{SPEC_FOLDER}/Tests.md`.
+
+Count all sub-bullet lines (indented lines starting with `-`) inside `## Stage 2 —` sections
+that describe individual `[Fact]` methods. These are the test cases. Store as `TEST_CASE_COUNT`.
+Count distinct `- [ ]` task lines in `## Stage 2 —` sections (one per test class). Store as `TEST_CLASS_COUNT`.
 
 Read `{SPEC_FOLDER}/Tasks.md`.
 
@@ -82,10 +89,13 @@ sdd-spec-create complete for {FeatureName}:
 
   Plan.md         — {✓ created | ⚠ skipped (already existed)}
   Constitution.md — {✓ created | ⚠ skipped (already existed)}
+  Tests.md        — {✓ created | ⚠ skipped (already existed)}   ({TEST_CASE_COUNT} test cases in {TEST_CLASS_COUNT} classes)
   Tasks.md        — {✓ created | ⚠ skipped (already existed)}
 
   Business rules:        {BR_COUNT}
+  Test cases:            {TEST_CASE_COUNT}
   Implementation tasks:  {TASK_COUNT}
 
-Next: open Tasks.md and run /sdd-next-task {FeatureName} to begin implementation.
+TDD order enforced by /sdd-next-task:
+  Stage 1: Setup → Stage 2: Write tests (RED) → Stage 3: Implement Tasks.md (GREEN) → Stage 4: dotnet test
 ```
