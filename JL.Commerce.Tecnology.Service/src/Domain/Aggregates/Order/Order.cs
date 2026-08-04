@@ -10,7 +10,10 @@ public sealed class Order : AggregateRoot<OrderId>
     public Guid TransactionId { get; private set; }
     public OrderStatus Status { get; private set; }
     public string? ErrorMessage { get; private set; }
-    public IReadOnlyList<OrderItem> Items { get; private set; } = [];
+
+    private readonly List<OrderItem> _items = new();
+    public IReadOnlyList<OrderItem> Items => _items.AsReadOnly();
+
     public PaymentDetails Payment { get; private set; } = default!;
     public ShippingAddress Address { get; private set; } = default!;
     public DateTime CreatedAt { get; private set; }
@@ -35,12 +38,12 @@ public sealed class Order : AggregateRoot<OrderId>
             TransactionId = transactionId,
             UserId = userId,
             Status = OrderStatus.Processing,
-            Items = items,
             Payment = payment,
             Address = address,
             CreatedAt = DateTime.UtcNow
         };
 
+        order._items.AddRange(items);
         order.AddDomainEvent(new OrderCreatedEvent(order.Id));
         return order;
     }

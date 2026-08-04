@@ -7,6 +7,7 @@ using JL.Commerce.Tecnology.Service.Application.Ports;
 using JL.Commerce.Tecnology.Service.Infrastructure.Data.Context;
 using JL.Commerce.Tecnology.Service.Infrastructure.Data.Repositories;
 using JL.Commerce.Tecnology.Service.Infrastructure.Integration.Messaging.Consumers;
+using JL.Commerce.Tecnology.Service.Infrastructure.Integration.Messaging.Publishers;
 using JL.Commerce.Tecnology.Service.Infrastructure.Integration.PaymentGateway;
 using JL.Commerce.Tecnology.Service.Presentation.Endpoints;
 using MassTransit;
@@ -14,6 +15,12 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ── JSON options — string enum support ───────────────────────────────────────
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+});
 
 // ── OpenAPI 3.1 (native, no Swashbuckle generation) ─────────────────────────
 builder.Services.AddOpenApi(options =>
@@ -56,6 +63,9 @@ builder.Services.AddAutoMapper(cfg => cfg.AddMaps(typeof(EntityMappingProfile).A
 builder.Services.AddDbContext<AppDbContext>(opt =>
     opt.UseNpgsql(builder.Configuration.GetConnectionString("Database")));
 
+// ── Event Bus ─────────────────────────────────────────────────────────────────
+builder.Services.AddScoped<IEventBus, MassTransitEventBus>();
+
 // ── Repository ────────────────────────────────────────────────────────────────
 builder.Services.AddScoped<IEntityRepository, EntityRepository>();
 builder.Services.AddScoped<ICatalogProductRepository, CatalogProductRepository>();
@@ -92,6 +102,33 @@ var app = builder.Build();
 // ── Global exception handler ──────────────────────────────────────────────────
 app.UseExceptionHandler(errApp => errApp.Run(async ctx =>
 {
+    var feature = ctx.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
+    if (feature?.Error is FluentValidation.ValidationException validationEx)
+    {
+        ctx.Response.StatusCode = StatusCodes.Status422UnprocessableEntity;
+        ctx.Response.ContentType = "application/json";
+        await ctx.Response.WriteAsJsonAsync(new
+        {
+            errors = validationEx.Errors
+                .Select(e => new { field = e.PropertyName, message = e.ErrorMessage })
+        });
+        return;
+    }
+
+    // A malformed request body (e.g. an unrecognised payment method that fails enum
+    // binding) surfaces as BadHttpRequestException. Treat it as an unprocessable
+    // entity rather than an internal error, without leaking parser details (CON-SEC-3).
+    if (feature?.Error is BadHttpRequestException)
+    {
+        ctx.Response.StatusCode = StatusCodes.Status422UnprocessableEntity;
+        ctx.Response.ContentType = "application/json";
+        await ctx.Response.WriteAsJsonAsync(new
+        {
+            message = "The request body could not be processed. Check the payload and try again."
+        });
+        return;
+    }
+
     ctx.Response.StatusCode = StatusCodes.Status500InternalServerError;
     ctx.Response.ContentType = "application/json";
     var correlationId = ctx.TraceIdentifier;
@@ -134,3 +171,5 @@ app.MapUserEndpoints();
 app.MapOrderEndpoints();
 
 app.Run();
+
+public partial class Program { }

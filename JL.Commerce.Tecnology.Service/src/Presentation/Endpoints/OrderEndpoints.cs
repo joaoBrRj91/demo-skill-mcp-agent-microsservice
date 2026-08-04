@@ -22,11 +22,12 @@ public static class OrderEndpoints
             .ProducesValidationProblem()
             .AddEndpointFilter(SecurityHeadersFilter);
 
-        group.MapGet("/{transactionId:guid}", GetStatusAsync)
+        group.MapGet("/{transactionId}", GetStatusAsync)
             .WithName("GetOrderStatus")
             .WithSummary("Polls the current status of an order by transactionId")
             .Produces<OrderPollingDto>()
             .Produces(StatusCodes.Status404NotFound)
+            .Produces(StatusCodes.Status400BadRequest)
             .AddEndpointFilter(SecurityHeadersFilter);
     }
 
@@ -42,11 +43,14 @@ public static class OrderEndpoints
     }
 
     private static async Task<IResult> GetStatusAsync(
-        Guid transactionId,
+        string transactionId,
         ISender sender,
         CancellationToken ct)
     {
-        var dto = await sender.Send(new GetOrderStatusQuery(transactionId), ct);
+        if (!Guid.TryParse(transactionId, out var guid))
+            return TypedResults.BadRequest();
+
+        var dto = await sender.Send(new GetOrderStatusQuery(guid), ct);
         return dto is null ? TypedResults.NotFound() : TypedResults.Ok(dto);
     }
 
