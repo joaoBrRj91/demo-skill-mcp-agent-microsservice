@@ -43,6 +43,17 @@
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": ["context7", "ddd-scaffold"],
   "hooks": {
-    "PostToolUse": []
+    "PostToolUse": [],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -f /tmp/jl_guardrails_pending ]; then rm /tmp/jl_guardrails_pending; echo 'run validate-guardrails-implementation'; exit 2; fi"
+          }
+        ]
+      }
+    ]
   }
 }

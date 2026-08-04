@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+echo ""
+echo "============================================================"
+echo "  POST-COMMIT: Guardrails validation is being invoked..."
+echo "  Running: validate-guardrails-implementation"
+echo "============================================================"
+echo ""
+
+# Signal Claude Code's Stop hook to re-invoke the guardrails agent
+touch /tmp/jl_guardrails_pending
