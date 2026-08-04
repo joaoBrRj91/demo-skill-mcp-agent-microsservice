@@ -12,7 +12,7 @@ public sealed class Order : AggregateRoot<OrderId>
     public string? ErrorMessage { get; private set; }
     public IReadOnlyList<OrderItem> Items { get; private set; } = [];
     public PaymentDetails Payment { get; private set; } = default!;
-    public ShippingAddress Address { get; private set; } = default!;
+    public ShippingAddress Address { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public DateTime? UpdatedAt { get; private set; }
     public DateTime? DeletedAt { get; private set; }
