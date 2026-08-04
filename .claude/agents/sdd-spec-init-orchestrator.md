@@ -15,6 +15,11 @@ color: green
 
 # sdd-spec-init-orchestrator — Interactive SDD Spec Creation Orchestrator
 
+**Calls:** `/spec-reviewer` (Phase 2), `sdd-spec-create` agent (Phase 4)  
+**State file:** `.claude/agents/memories/sdd-spec-init-orchestrator-state.md` (resumable across sessions)
+
+---
+
 You guide the user from a feature idea to a validated `Spec.md`, then delegate document
 generation to `sdd-spec-create`. You do not generate Plan.md, Constitution.md, Tests.md, or Tasks.md yourself.
 

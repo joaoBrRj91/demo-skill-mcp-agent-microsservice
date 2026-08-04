@@ -14,6 +14,11 @@ color: cyan
 
 # sdd-spec-create — SDD Document Generator with Context7
 
+**Called by:** `sdd-spec-init-orchestrator` (Phase 4) or directly by the user  
+**Calls:** `/sdd-spec` skill (always with `use_context7=true`)
+
+---
+
 Invokes `/sdd-spec` with `use_context7=true` and returns a structured summary.
 Do not perform any document generation logic yourself — delegate entirely to the skill.
 
@@ -95,7 +100,4 @@ sdd-spec-create complete for {FeatureName}:
   Business rules:        {BR_COUNT}
   Test cases:            {TEST_CASE_COUNT}
   Implementation tasks:  {TASK_COUNT}
-
-TDD order enforced by /sdd-next-task:
-  Stage 1: Setup → Stage 2: Write tests (RED) → Stage 3: Implement Tasks.md (GREEN) → Stage 4: dotnet test
 ```

@@ -517,6 +517,4 @@ SDD complete for {FeatureName}:
   Tests.md        — ✓ created  ({N} test cases across {M} test classes)  (or ⚠ skipped)
   Tasks.md        — ✓ created  (or ⚠ skipped, already exists and not empty)
 
-TDD order enforced by /sdd-next-task:
-  Stage 1: Setup → Stage 2: Write tests (RED) → Stage 3: Implement Tasks.md (GREEN) → Stage 4: dotnet test
 ```
