@@ -61,10 +61,14 @@ For each path in `CHANGED_FILES`:
 - Derive the layer (from the bucket classification above).
 - Look up the `(aggregate, layer)` cell in the **Aggregate Compliance Status** table.
 
-Decision:
+Run `git rev-parse HEAD` to get `CURRENT_SHA`.
+Extract `DDD_LAST_SHA` from the **Last Review State** table in `ddd-reviewer-memory.md` (treat `—` as no prior review).
+
+Decision (first match wins):
 - If **any** cell is `NOT_REVIEWED` → `DDD_SKIP=false` (agent must review unknown territory)
 - If **any** cell is `VIOLATION` → `DDD_SKIP=false` (commit may have fixed an open violation)
-- If **all** cells are `PASS` → `DDD_SKIP=true`
+- If `DDD_LAST_SHA` != `CURRENT_SHA` → `DDD_SKIP=false` (files changed since last DDD review)
+- If **all** cells are `PASS` AND `DDD_LAST_SHA` == `CURRENT_SHA` → `DDD_SKIP=true`
 
 If `DDD_SKIP=true`: build `DDD_RESULT` directly from memory without spawning the sub-agent:
 ```

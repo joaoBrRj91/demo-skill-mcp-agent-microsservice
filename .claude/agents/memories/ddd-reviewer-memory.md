@@ -5,6 +5,14 @@
 
 ---
 
+## Last Review State
+
+| Date | Git SHA | Files Reviewed | Violations Found |
+|------|---------|----------------|------------------|
+| —    | —       | —              | —                |
+
+---
+
 ## Aggregate Compliance Status
 
 | Aggregate       | Domain    | Application | Infrastructure.Data | Infrastructure.Integration | Presentation |

@@ -36,7 +36,9 @@ Use **Edit** to make targeted, minimal updates. Write only when something change
 
 After any write, update the `Last updated:` comment at the top of the file with today's date in ISO 8601 format (YYYY-MM-DD).
 
-**Do not write** if the review produces no new findings and no status changes.
+**Always** update the **Last Review State** table at the end of every review, even when no findings changed: run `git rev-parse HEAD` to get `REVIEW_SHA`, then set Date to today (YYYY-MM-DD), Git SHA to `REVIEW_SHA`, Files Reviewed to the count of paths reviewed this invocation, Violations Found to the count of open violations added this invocation (0 if clean). This write is unconditional — the orchestrator uses this SHA to detect stale reviews.
+
+**Do not write** to any other section if the review produces no new findings and no status changes.
 
 ---
 
