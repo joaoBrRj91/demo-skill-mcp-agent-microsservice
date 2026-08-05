@@ -148,32 +148,16 @@ Endpoints are registered via extension methods in `Presentation/Endpoints/` and 
 
 ---
 
-### Hooks (automated behaviors)
-
-Five hooks are configured in `.claude/settings.local.json` and run automatically:
-
-| Hook        | Trigger                                                  | Behavior                                                                                     |
-| ----------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| PreToolUse  | Edit/Write targeting the protected config file           | Blocks the edit (exit 2). Edit that file manually if intentional.                            |
-| PostToolUse | Edit/Write to any `.cs` file, or any `ddd-scaffold` tool | Sets flag `/tmp/jl_cs_modified` for the Stop hook.                                           |
-| PostToolUse | Bash call containing `git commit`                        | Sets flag `/tmp/jl_guardrails_pending` for the Stop hook.                                    |
-| Stop        | Turn end if `/tmp/jl_cs_modified` exists                 | Removes flag, runs `dotnet build --no-restore -v q`, prints last 15 lines.                   |
-| Stop        | Turn end if `/tmp/jl_guardrails_pending` exists          | Removes flag, exits 2 — re-invokes Claude to run `validate-guardrails-implementation`. |
-
----
-
 ### Guardrails Review
 
 The `validate-guardrails-implementation` agent runs `ddd-reviewer` and `security-reviewer` in parallel and writes a consolidated report to `.claude/agents/reports/`.
 
 **Invocation Modes.** :
 
-1. **On demand - Manual** — type a prompt such as:
+1. **Manual** — type a prompt such as:
    - `"revise my implementation with guardrails ddd security"`
    - `"review with guardrails"`
    - `"run guardrails review"`
-
-2. **After a git commit - automatically** — once you have committed your changes, run agent automatically.
 
 **What the agent does:** invokes ddd-reviewer and security-reviewer concurrently, synthesises findings, and produces a structured report (Overall: PASS / NEEDS_ATTENTION / FAIL / SCAN_ERROR) with a recommended fix order.
 

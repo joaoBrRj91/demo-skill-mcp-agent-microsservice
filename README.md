@@ -234,23 +234,7 @@ Claude launches the `ddd-reviewer` subagent, which reads the canonical reference
 
 ---
 
-### 3. Automated hooks
-
-Five hooks run automatically without any manual action:
-
-| Hook | When | What happens |
-|---|---|---|
-| `PreToolUse` | Any edit to the app settings config file | Blocks the edit (edit it manually if intentional) |
-| `PostToolUse` | Any edit to a `.cs` file or any `ddd-scaffold` MCP call | Sets a flag; Stop hook runs `dotnet build --no-restore` and prints the last 15 lines |
-| `PostToolUse` | Any `git commit` Bash call | Sets a flag for the guardrails Stop hook |
-| `Stop` | End of turn if the build flag is set | Runs `dotnet build --no-restore -v q` automatically |
-| `Stop` | End of turn if the guardrails flag is set | Re-invokes Claude to run `validate-guardrails-implementation` automatically |
-
-This means: **edit a `.cs` file → build runs automatically; commit code → DDD + security review runs automatically**.
-
----
-
-### 4. Security Reviewer Agent
+### 3. Security Reviewer Agent
 
 A Claude Code subagent defined in `.claude/agents/security-reviewer.md`. It scans code for security issues using **Semgrep** (with a static-analysis fallback) and uses the **context7 MCP** to ground fix suggestions in current .NET library docs.
 
@@ -272,7 +256,7 @@ Review the Order aggregate for security issues
 
 ---
 
-### 5. Validate-Guardrails Orchestrator
+### 4. Validate-Guardrails Orchestrator
 
 Defined in `.claude/agents/validate-guardrails-implementation.md`. This orchestrator runs **ddd-reviewer and security-reviewer in parallel**, cross-references their findings, and writes a consolidated report to `.claude/agents/reports/`.
 
@@ -280,14 +264,13 @@ Defined in `.claude/agents/validate-guardrails-implementation.md`. This orchestr
 
 **Invocation modes:**
 
-- **Automatic** — triggered after every `git commit` via the Stop hook (no action needed)
 - **Manual** — tell Claude Code: `"review with guardrails"` or `"run guardrails review"`
 
 The orchestrator classifies changed files by layer (Domain / Application / Infrastructure.Data / Infrastructure.Integration / Presentation), checks agent memory files to skip already-reviewed code, and determines the recommended fix order for any findings.
 
 ---
 
-### 6. Spec-Driven Development (SDD) + TDD Workflow
+### 5. Spec-Driven Development (SDD) + TDD Workflow
 
 Features are fully specified before code is written, then implemented through a TDD cycle. The workflow runs in three sequential steps.
 
@@ -509,7 +492,7 @@ The scaffold templates live in `JL.DddScaffold.Mcp/`. Modifying the templates le
 │   │   ├── scaffold-aggregate/SKILL.md          ← wraps MCP scaffold_aggregate tool
 │   │   ├── sdd-spec/SKILL.md                   ← generates Plan/Constitution/Tests/Tasks from Spec
 │   │   └── sdd-next-task/SKILL.md              ← TDD 4-stage cycle (SETUP → RED → GREEN → VERIFY)
-│   └── settings.local.json                      ← hooks configuration
+│   └── settings.local.json                      ← Claude Code settings
 │
 ├── .mcp.json                        ← MCP server registration
 └── CLAUDE.md                        ← instructions for Claude Code
