@@ -38,7 +38,7 @@ dotnet ef database update --project src/Infrastructure.Data --startup-project sr
 dotnet test
 ```
 
-No test implementations yet — `tests/UnitTests/` and `tests/IntegrationTests/` are empty.
+Test projects (`UnitTests`, `IntegrationTests`) are configured in the solution. `CreateOrderDomainBusiness` has 58 tests implemented across both layers. Use `/sdd-next-task` to scaffold and implement tests for new features via the TDD cycle.
 
 ---
 
@@ -129,9 +129,11 @@ GET    /api/v1/catalog-products           → GetAllCatalogProductsQuery
 GET    /api/v1/catalog-products/{id:guid} → GetCatalogProductByIdQuery
 PUT    /api/v1/catalog-products/{id:guid} → UpdateCatalogProductCommand
 DELETE /api/v1/catalog-products/{id:guid} → DeleteCatalogProductCommand
-POST   /api/v1/entities                   → CreateEntityCommand
-GET    /api/v1/entities/{id:guid}         → GetEntityByIdQuery
-GET    /openapi/v1.json                   → OpenAPI 3.1 schema
+POST   /api/v1/entities                           → CreateEntityCommand
+GET    /api/v1/entities/{id:guid}               → GetEntityByIdQuery
+POST   /api/v1/orders                           → CreateOrderCommand (202 Accepted, async)
+GET    /api/v1/orders/{transactionId:guid}      → GetOrderStatusQuery
+GET    /openapi/v1.json                         → OpenAPI 3.1 schema
 GET    /docs                              → ReDoc UI
 ```
 
@@ -179,23 +181,44 @@ The `validate-guardrails-implementation` agent runs `ddd-reviewer` and `security
 
 ### Spec-Driven Development (SDD)
 
-Features are specified before any code is written. The `sdd-spec` skill reads an existing `Spec.md` and generates the three implementation documents.
+Features are fully specified before any code is written. The workflow runs in three sequential steps: write a spec, generate implementation documents, then implement via a TDD cycle.
 
 **`specs/` directory convention:**
 
 ```
 specs/{ServiceName}/Features/{FeatureName}/
 ├── Spec.md          ← written manually — business rules only, no code/file paths
-├── Plan.md          ← generated — implementation detail: layers, files, class names, method sigs
+├── Plan.md          ← generated — layers, files, class names, method signatures
 ├── Constitution.md  ← generated — immutable constraints with RFC 2119 language (CON-* IDs)
+├── Tests.md         ← generated — TDD checkbox list with test classes and [Fact] methods
 └── Tasks.md         ← generated — checkbox list, one task per file, with CON-* rule references
 ```
 
-**When to invoke:** after writing `Spec.md`, before any code is scaffolded.
+**Three-step workflow:**
 
-**How to invoke:** tell Claude Code `"run the sdd-spec skill for <FeatureName>"` or type `/sdd-spec`.
+| Step | Tool / Agent | What it does |
+| ---- | ------------ | ------------ |
+| 1. Spec creation | Manual or `sdd-spec-init-orchestrator` | Write `Spec.md` (business rules only). The orchestrator guides with structured Q&A or accepts natural-language input (>100 words auto-detected). |
+| 2. Document generation | `/sdd-spec` or `sdd-spec-create` agent | Generates Plan → Constitution → Tests → Tasks in order; each document uses all prior ones as context. `sdd-spec-create` adds context7 enrichment for current .NET library API signatures. |
+| 3. TDD implementation | `/sdd-next-task <FeatureName>` | Runs the 4-stage TDD cycle below. Progress is checkpointed in `Tests.md` and `Tasks.md` — safe to resume across sessions. |
 
-**Skip logic:** the skill skips any file that already exists and is non-empty — safe to re-run after editing `Spec.md`.
+**`sdd-next-task` 4-stage TDD cycle:**
+
+| Stage | Name | What happens |
+| ----- | ---- | ------------ |
+| 1 | SETUP | Creates `UnitTests.csproj` and `IntegrationTests.csproj`, adds both to the solution |
+| 2 | RED | Writes all test `.cs` files; no build (referenced types don't exist yet) |
+| 3 | GREEN | Writes production files one task at a time; build check per task (2 fix rounds max before stopping) |
+| 4 | VERIFY | Runs `dotnet test`; reports pass/fail per test |
+
+**CATCH-UP mode:** if production code already exists when RED completes, skips GREEN and jumps to a build + VERIFY check.
+
+**Agents involved:**
+
+- `sdd-spec-init-orchestrator` — interactive 5-phase agent (COLLECTING → DRAFT_GENERATED → AWAITING_CONFIRMATION → COMPLETION); persists state to `.claude/agents/memories/sdd-spec-init-orchestrator-state.md`
+- `sdd-spec-create` — invoked by the orchestrator or directly; calls `/sdd-spec use_context7=true` and returns a summary (BR count, test count, task count)
+
+**Skip logic:** the `sdd-spec` skill skips any file that already exists and is non-empty — safe to re-run after editing `Spec.md`.
 
 **Canonical example:** `specs/JL.Commerce.Tecnology.Service/Features/CreateOrderDomainBusiness/`
 

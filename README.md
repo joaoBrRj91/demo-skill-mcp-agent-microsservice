@@ -86,9 +86,11 @@ GET    /api/v1/catalog-products           → GetAllCatalogProductsQuery
 GET    /api/v1/catalog-products/{id:guid} → GetCatalogProductByIdQuery
 PUT    /api/v1/catalog-products/{id:guid} → UpdateCatalogProductCommand
 DELETE /api/v1/catalog-products/{id:guid} → DeleteCatalogProductCommand
-POST   /api/v1/entities                   → CreateEntityCommand
-GET    /api/v1/entities/{id:guid}         → GetEntityByIdQuery
-GET    /openapi/v1.json                   → OpenAPI 3.1 schema
+POST   /api/v1/entities                           → CreateEntityCommand
+GET    /api/v1/entities/{id:guid}               → GetEntityByIdQuery
+POST   /api/v1/orders                           → CreateOrderCommand (202 Accepted, async)
+GET    /api/v1/orders/{transactionId:guid}      → GetOrderStatusQuery
+GET    /openapi/v1.json                         → OpenAPI 3.1 schema
 GET    /docs                              → ReDoc UI
 ```
 
@@ -285,9 +287,9 @@ The orchestrator classifies changed files by layer (Domain / Application / Infra
 
 ---
 
-### 6. Spec-Driven Development (SDD) Workflow
+### 6. Spec-Driven Development (SDD) + TDD Workflow
 
-Features are fully specified before code is written. The `sdd-spec` skill takes an existing `Spec.md` and generates three implementation documents in the correct order.
+Features are fully specified before code is written, then implemented through a TDD cycle. The workflow runs in three sequential steps.
 
 **Document sequence:**
 
@@ -296,6 +298,7 @@ Features are fully specified before code is written. The `sdd-spec` skill takes 
 | `Spec.md` | You (manually) | Business rules only — no file paths, no class names |
 | `Plan.md` | `sdd-spec` skill | All five layers: file paths, class names, method signatures, code snippets |
 | `Constitution.md` | `sdd-spec` skill | Immutable constraints using RFC 2119 language (MUST / MUST NOT / SHALL), each with a `CON-*` ID |
+| `Tests.md` | `sdd-spec` skill | TDD checkbox list with test class files and `[Fact]` method names; tracks SETUP / RED / GREEN / VERIFY stage state |
 | `Tasks.md` | `sdd-spec` skill | Checkbox list — one task per file, each referencing the `CON-*` rules it satisfies |
 
 **`specs/` directory layout:**
@@ -305,16 +308,44 @@ specs/{ServiceName}/Features/{FeatureName}/
 ├── Spec.md
 ├── Plan.md
 ├── Constitution.md
+├── Tests.md
 └── Tasks.md
 ```
 
-**To invoke it**, tell Claude Code:
+**Three-step workflow:**
+
+**Step 1 — Write the spec** (manually or interactively):
+
+```
+Start the SDD workflow for CreateOrderDomainBusiness
+```
+
+The `sdd-spec-init-orchestrator` agent guides you through 5 phases (COLLECTING → DRAFT_GENERATED → AWAITING_CONFIRMATION → COMPLETION). It accepts structured Q&A or detects natural-language input (>100 words) and skips the questionnaire. State persists across sessions so an interrupted flow can be resumed.
+
+**Step 2 — Generate implementation documents:**
 
 ```
 Run the sdd-spec skill for CreateOrderDomainBusiness
 ```
 
-The skill skips any file that already exists and is non-empty, so it is safe to re-run after editing `Spec.md`.
+`sdd-spec` generates Plan → Constitution → Tests → Tasks in order; each document uses all prior ones as context. The `sdd-spec-create` agent wraps this with context7 enrichment, fetching current MediatR / FluentValidation / AutoMapper / MassTransit API signatures and embedding them in `Tasks.md`. Skips any file that already exists and is non-empty.
+
+**Step 3 — Implement with TDD:**
+
+```
+/sdd-next-task CreateOrderDomainBusiness
+```
+
+Runs the 4-stage TDD cycle automatically:
+
+| Stage | Name | What happens |
+|---|---|---|
+| 1 | SETUP | Creates `UnitTests.csproj` and `IntegrationTests.csproj`, adds both to the solution |
+| 2 | RED | Writes all test `.cs` files; no build (types don't exist yet) |
+| 3 | GREEN | Writes production files one task at a time; per-task build check (2 fix rounds max) |
+| 4 | VERIFY | Runs `dotnet test`; reports pass/fail per test |
+
+Progress is checkpointed via checkbox state in `Tests.md` and `Tasks.md` — safe to stop and resume across sessions. If production code already exists when RED completes, the skill skips GREEN and jumps directly to a build + VERIFY check (CATCH-UP mode).
 
 **Working example:** `specs/JL.Commerce.Tecnology.Service/Features/CreateOrderDomainBusiness/`
 
@@ -437,12 +468,15 @@ The scaffold templates live in `JL.DddScaffold.Mcp/`. Modifying the templates le
 ```
 .
 ├── JL.Commerce.Tecnology.Service/   ← microservice
-│   └── src/
-│       ├── Domain/
-│       ├── Application/
-│       ├── Infrastructure.Data/
-│       ├── Infrastructure.Integration/
-│       └── Presentation/
+│   ├── src/
+│   │   ├── Domain/
+│   │   ├── Application/
+│   │   ├── Infrastructure.Data/
+│   │   ├── Infrastructure.Integration/
+│   │   └── Presentation/
+│   └── tests/
+│       ├── UnitTests/               ← xUnit + Moq unit tests
+│       └── IntegrationTests/        ← xUnit integration tests
 │
 ├── JL.DddScaffold.Mcp/              ← custom MCP server
 │   └── src/
@@ -455,6 +489,7 @@ The scaffold templates live in `JL.DddScaffold.Mcp/`. Modifying the templates le
 │               ├── Spec.md          ← business rules (written manually)
 │               ├── Plan.md          ← implementation plan (generated)
 │               ├── Constitution.md  ← immutable constraints (generated)
+│               ├── Tests.md         ← TDD checkpoint list (generated)
 │               └── Tasks.md         ← checkbox task list (generated)
 │
 ├── .claude/
@@ -462,6 +497,8 @@ The scaffold templates live in `JL.DddScaffold.Mcp/`. Modifying the templates le
 │   │   ├── ddd-reviewer.md                      ← DDD compliance reviewer subagent
 │   │   ├── security-reviewer.md                 ← OWASP/Semgrep security reviewer subagent
 │   │   ├── validate-guardrails-implementation.md ← orchestrator (runs both in parallel)
+│   │   ├── sdd-spec-init-orchestrator.md        ← interactive spec creation orchestrator
+│   │   ├── sdd-spec-create.md                   ← context7-enriched document generator
 │   │   ├── memories/                            ← per-agent memory files
 │   │   │   ├── ddd-reviewer-memory.md
 │   │   │   └── security-reviewer-memory.md
@@ -470,7 +507,8 @@ The scaffold templates live in `JL.DddScaffold.Mcp/`. Modifying the templates le
 │   │   └── reports/                             ← guardrails consolidated reports
 │   ├── skills/
 │   │   ├── scaffold-aggregate/SKILL.md          ← wraps MCP scaffold_aggregate tool
-│   │   └── sdd-spec/SKILL.md                   ← generates Plan/Constitution/Tasks from Spec
+│   │   ├── sdd-spec/SKILL.md                   ← generates Plan/Constitution/Tests/Tasks from Spec
+│   │   └── sdd-next-task/SKILL.md              ← TDD 4-stage cycle (SETUP → RED → GREEN → VERIFY)
 │   └── settings.local.json                      ← hooks configuration
 │
 ├── .mcp.json                        ← MCP server registration
